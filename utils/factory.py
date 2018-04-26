@@ -15,6 +15,6 @@ EnvDict = {"gym": None}   # gym wrapper
 MemoryDict = {"shared": None,
               "none":   None}
 
-# from core.models.continuous_mlp_model import ContinuousMlpModel
+from core.models.continuous_mlp_model import ContinuousMlpModel
 ModelDict = {"discrete-mlp":   None,
-             "continuous-mlp": None}#ContinuousMlpModel}
+             "continuous-mlp": ContinuousMlpModel}

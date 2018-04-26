@@ -41,37 +41,41 @@ if __name__ == '__main__':
                              opt.memory_type + ' | ' +
                              opt.model_type)
 
-    global_model = MyModel(opt.model_params)
+    # global_model = MyModel(opt.model_params)
+    global_model = model_prototype(opt.model_params)
     global_model.share_memory() # gradients are allocated lazily, so they are not shared here
 
     processes = []
     if opt.mode == 1:
         # actor
-        # actor_fn = ActorDict[opt.agent_type]
-        # print("actor_fn --->", actor_fn)
+        actor_fn = ActorDict[opt.agent_type]
         for process_ind in range(opt.num_actors):
-            # p = mp.Process(target=actor_fn, args=(process_ind, opt, board, global_model))
-            p = mp.Process(target=continuous_actor, args=(process_ind, opt, global_model))
+            p = mp.Process(target=actor_fn, args=(process_ind, opt,
+                                                  model_prototype,
+                                                  global_model))
             p.start()
             processes.append(p)
         # learner
         learner_fn = LearnerDict[opt.agent_type]
         for process_ind in range(opt.num_learners):
-            # p = mp.Process(target=learner_fn, args=(opt.num_actors+process_ind, opt, board, global_model))
-            p = mp.Process(target=learner_fn, args=(opt.num_actors+process_ind, opt, global_model))
+            p = mp.Process(target=learner_fn, args=(opt.num_actors+process_ind, opt,
+                                                    model_prototype,
+                                                    global_model))
             p.start()
             processes.append(p)
         # evaluator
         evaluator_fn = EvaluatorDict[opt.agent_type]
-        # p = mp.Process(target=evaluator_fn, args=(opt.num_actors+opt.num_learners, opt, board, global_model))
-        p = mp.Process(target=evaluator_fn, args=(opt.num_actors+opt.num_learners, opt, global_model))
+        p = mp.Process(target=evaluator_fn, args=(opt.num_actors+opt.num_learners, opt,
+                                                  model_prototype,
+                                                  global_model))
         p.start()
         processes.append(p)
     elif opt.mode == 2:
         # tester
         tester_fn = TesterDict[opt.agent_type]
-        # p = mp.Process(target=evaluator_fn, args=(opt.num_actors+opt.num_learners, opt, board, global_model))
-        p = mp.Process(target=evaluator_fn, args=(opt.num_actors+opt.num_learners, opt, global_model))
+        p = mp.Process(target=evaluator_fn, args=(opt.num_actors+opt.num_learners, opt,
+                                                  model_prototype,
+                                                  global_model))
         p.start()
         processes.append(p)
 

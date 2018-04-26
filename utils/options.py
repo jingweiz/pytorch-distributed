@@ -66,10 +66,26 @@ class ModelParams(Params):
     def __init__(self):
         super(ModelParams, self).__init__()
 
+        # NOTE: the devices cannot be passed into the processes this way
+        # if 'discrete' in self.model_type:
+        #     self.model_device = torch.device('cpu')
+        # if 'continuous' in self.model_type:
+        #     self.model_device = torch.device('cpu')
+
 
 class AgentParams(Params):
     def __init__(self):
         super(AgentParams, self).__init__()
+
+        if 'discrete' in self.agent_type:
+            # criteria and optimizer
+            self.value_criteria = nn.MSELoss()
+            self.optim = SharedAdam
+        elif 'continuous' in self.agent_type:
+            self.value_criteria = nn.MSELoss()
+            self.optim = SharedAdam
+            # hyperparameters
+            self.steps               = 10   # max #iterations
 
 
 class Options(Params):
