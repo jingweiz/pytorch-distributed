@@ -8,7 +8,7 @@ from tensorboardX import SummaryWriter
 from utils.options import Options
 from utils.factory import ActorDict, LearnerDict, EvaluatorDict
 from utils.factory import EnvDict, MemoryDict, ModelDict
-from core.single_processes.continuous_single_processes import *
+
 
 if __name__ == '__main__':
     mp.set_start_method("spawn")
