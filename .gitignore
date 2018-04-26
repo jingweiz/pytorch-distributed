@@ -1,0 +1,10 @@
+*.pyc
+core/*.pyc
+core/*/*.pyc
+optims/*.pyc
+utils/*.pyc
+models/*
+!logs
+logs/*
+tests/*
+core/envs/log/*
