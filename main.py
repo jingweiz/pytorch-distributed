@@ -28,7 +28,6 @@ if __name__ == '__main__':
                              opt.memory_type + ' | ' +
                              opt.model_type)
 
-    # global_model = MyModel(opt.model_params)
     global_model = model_prototype(opt.model_params)
     global_model.share_memory() # gradients are allocated lazily, so they are not shared here
 
