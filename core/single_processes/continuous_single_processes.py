@@ -52,13 +52,11 @@ def continuous_learner(process_ind, args,
         # critic_loss.backward()
         (actor_loss+critic_loss).backward()
         nn.utils.clip_grad_norm_(gpu_model.parameters(), 100.)
+
+        # sync local grads to global
         ensure_global_grads(gpu_model, global_model, global_device)
         # actor_optimizer.step()    # TODO: local keeps updating its own? then periodcally copy the global model
         # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
-
-        # sync local grads to global
-        global_model.load_state_dict(gpu_model.state_dict())
-        print("  learner_process ---> global_model", global_model.actor[0].weight.device)
 
 
 def continuous_evaluator(process_ind, args,
