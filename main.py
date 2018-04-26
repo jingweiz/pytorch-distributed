@@ -10,19 +10,6 @@ from utils.factory import ActorDict, LearnerDict, EvaluatorDict
 from utils.factory import EnvDict, MemoryDict, ModelDict
 from core.single_processes.continuous_single_processes import *
 
-class MyModel(nn.Module):
-    def __init__(self, args):
-        super(MyModel, self).__init__()
-
-        self.actor = nn.Sequential(
-            nn.Linear(10, 20),
-            nn.Tanh(),
-            nn.Linear(20, 1)
-        )
-
-    def forward(self, x):
-        return self.actor(x)
-
 if __name__ == '__main__':
     mp.set_start_method("spawn")
 
