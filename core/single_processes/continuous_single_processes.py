@@ -22,12 +22,6 @@ def continuous_learner(process_ind, args,
 
     # sync global model to local
     print("  learner_process --->", process_ind)
-    # cpu_model = model_prototype(args.model_params)
-    # cpu_model.load_state_dict(global_model.state_dict())
-    # print("  learner_process ---> cpu_model", cpu_model.actor[0].weight.device)
-    # gpu_model = model_prototype(args.model_params).to(local_device)
-    # gpu_model.load_state_dict(cpu_model.state_dict())
-    # print("  learner_process ---> gpu_model", gpu_model.actor[0].weight.device)
     gpu_model = model_prototype(args.model_params).to(local_device)
     gpu_model.load_state_dict(global_model.state_dict())
     print("  learner_process ---> gpu_model", gpu_model.actor[0].weight.device)
@@ -63,10 +57,6 @@ def continuous_learner(process_ind, args,
         # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
 
         # sync local grads to global
-        # cpu_model.load_state_dict(gpu_model.state_dict())
-        # print("  learner_process ---> cpu_model", cpu_model.actor[0].weight.device)
-        # global_model.load_state_dict(cpu_model.state_dict())
-        # print("  learner_process ---> global_model", global_model.actor[0].weight.device)
         global_model.load_state_dict(gpu_model.state_dict())
         print("  learner_process ---> global_model", global_model.actor[0].weight.device)
 
