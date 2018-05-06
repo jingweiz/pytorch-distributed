@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.multiprocessing as mp
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 from utils.options import Options
 from utils.factory import ActorDict, LearnerDict, EvaluatorDict, TesterDict
@@ -15,18 +15,18 @@ if __name__ == '__main__':
 
     opt = Options()
     torch.manual_seed(opt.seed)
-    board = SummaryWriter(opt.log_dir)
+    # board = SummaryWriter(opt.log_dir)
 
     env_prototype = EnvDict[opt.env_type]
     memory_prototype = MemoryDict[opt.memory_type]
     model_prototype = ModelDict[opt.model_type]
-    board.add_text('config', str(opt.num_actors) + 'actors(x ' +
-                             str(opt.num_envs_per_actor) + 'envs) + ' +
-                             str(opt.num_learners) + 'learners' + ' | ' +
-                             opt.agent_type + ' | ' +
-                             opt.env_type + ' | ' + opt.game + ' | ' +
-                             opt.memory_type + ' | ' +
-                             opt.model_type)
+    # board.add_text('config', str(opt.num_actors) + 'actors(x ' +
+    #                          str(opt.num_envs_per_actor) + 'envs) + ' +
+    #                          str(opt.num_learners) + 'learners' + ' | ' +
+    #                          opt.agent_type + ' | ' +
+    #                          opt.env_type + ' | ' + opt.game + ' | ' +
+    #                          opt.memory_type + ' | ' +
+    #                          opt.model_type)
 
     # dummy env to get state/action/reward_shape
     dummy_env = env_prototype(opt.env_params, opt.num_actors+opt.num_learners+1)
