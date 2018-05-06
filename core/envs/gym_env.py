@@ -26,7 +26,7 @@ class GymEnv(Env):
         self.gym_log_dir = args.gym_log_dir
 
         # init envs
-        print("env config ----------->", "process_ind:", str(process_ind), "num_envs_per_process:", str(num_envs_per_process))
+        print("env config ---------->", str(process_ind), str(num_envs_per_process))
         for i in range(self.num_envs_per_process):
             print("env seed --->", str(args.seed + self.process_ind*self.num_envs_per_actor + i))
         envs = [make_env(args.game, args.seed, self.process_ind*self.num_envs_per_actor+i, self.gym_log_dir)

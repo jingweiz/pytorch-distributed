@@ -52,6 +52,7 @@ if __name__ == '__main__':
                            args=(process_ind, opt,
                                  env_prototype,
                                  model_prototype,
+                                 global_memory,
                                  global_model))
             p.start()
             processes.append(p)
@@ -61,6 +62,7 @@ if __name__ == '__main__':
             p = mp.Process(target=learner_fn,
                            args=(opt.num_actors+process_ind, opt,
                                  model_prototype,
+                                 global_memory,
                                  global_model))
             p.start()
             processes.append(p)

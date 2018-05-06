@@ -17,6 +17,7 @@ class Memory(object):
         self.pos = 0
         self.full = False
 
+    @property
     def size(self):
         if self.full:
             return self.memory_size

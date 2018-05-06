@@ -8,8 +8,9 @@ from utils.helpers import ensure_global_grads
 def continuous_actor(process_ind, args,
                      env_prototype,
                      model_prototype,
+                     global_memory,
                      global_model):
-    print("    actor_process --->", process_ind)
+    print("---------------------------->", process_ind, "actor")
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
@@ -25,15 +26,16 @@ def continuous_actor(process_ind, args,
     torch.set_grad_enabled(False)
 
     # act
-    for i in range(10):
+    for i in range(10): # TODO: what should be the condition here???
         # sync global model to local
         cpu_model.load_state_dict(global_model.state_dict())
 
 
 def continuous_learner(process_ind, args,
                        model_prototype,
+                       global_memory,
                        global_model):
-    print("  learner_process --->", process_ind)
+    print("---------------------------->", process_ind, "learner")
     # env
     # memory
     # model
@@ -54,7 +56,7 @@ def continuous_learner(process_ind, args,
 
     # learn
     step = 0
-    for step in range(10):
+    for step in range(10): # TODO: what should be the condition here???
         batch_size = 8
         input_dims = [1, 1, 100]
         input = torch.randn([batch_size] + input_dims, requires_grad=True)
@@ -81,7 +83,7 @@ def continuous_evaluator(process_ind, args,
                          env_prototype,
                          model_prototype,
                          global_model):
-    print("evaluator_process --->", process_ind)
+    print("---------------------------->", process_ind, "evaluator")
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
@@ -103,7 +105,7 @@ def continuous_tester(process_ind, args,
                       env_prototype,
                       model_prototype,
                       global_model):
-    print("   tester_process --->", process_ind)
+    print("---------------------------->", process_ind, "tester")
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
