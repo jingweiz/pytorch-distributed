@@ -9,10 +9,11 @@ EvaluatorDict = {"discrete":   None,
 TesterDict = {"discrete":   None,
               "continuous": continuous_tester}          # d3pg
 
-# from core.envs.gym_env import GymEnv
-EnvDict = {"gym": None}   # gym wrapper
+from core.envs.gym_env import GymEnv
+EnvDict = {"gym": GymEnv}   # gym wrapper
 
-MemoryDict = {"shared": None,
+from core.memories.shared_memory import SharedMemory
+MemoryDict = {"shared": SharedMemory,
               "none":   None}
 
 from core.models.continuous_mlp_model import ContinuousMlpModel

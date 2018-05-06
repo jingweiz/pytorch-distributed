@@ -18,19 +18,19 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18042600"    # "yymmdd##"
+        self.timestamp  = "18050600"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 1
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
-        self.seed       = 123
+        self.seed       = 100
         self.render     = False         # whether render the window from the original envs or not
         self.visualize  = True          # whether do online plotting and stuff or not
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
-        self.num_envs_per_actor = 4     # NOTE: must be 1 for envs that don't have parallel support
+        self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
         self.num_actors = 2
         self.num_learners = 1
 
@@ -56,10 +56,18 @@ class EnvParams(Params):
     def __init__(self):
         super(EnvParams, self).__init__()
 
+        if self.env_type == "gym":
+            self.gym_log_dir = None     # When not None, log will be recoreded by baselines monitor
+            self.state_hei = 48         # TODO:
+            self.state_wid = 48         # TODO:
+
 
 class MemoryParams(Params):
     def __init__(self):
         super(MemoryParams, self).__init__()
+
+        if self.memory_type == "shared":
+            self.memory_size = 50#1e6
 
 
 class ModelParams(Params):
@@ -82,10 +90,22 @@ class AgentParams(Params):
             self.value_criteria = nn.MSELoss()
             self.optim = SharedAdam
         elif 'continuous' in self.agent_type:
+            # criteria and optimizer
             self.value_criteria = nn.MSELoss()
             self.optim = SharedAdam
             # hyperparameters
+            self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 10   # max #iterations
+            self.early_stop          = 250  # max #steps per episode
+            self.gamma               = 0.99
+            self.clip_grad           = 0.5#np.inf
+            self.lr                  = 1e-4
+            self.lr_decay            = False
+            self.weight_decay        = 0.
+            self.eval_freq           = 1000#00  # NOTE: here means every this many steps
+            self.eval_steps          = 1000
+            self.prog_freq           = self.eval_freq
+            self.test_nepisodes      = 50
 
 
 class Options(Params):

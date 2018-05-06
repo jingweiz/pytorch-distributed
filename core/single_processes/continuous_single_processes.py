@@ -6,10 +6,14 @@ from utils.helpers import ensure_global_grads
 
 
 def continuous_actor(process_ind, args,
+                     env_prototype,
                      model_prototype,
                      global_model):
-    # init
     print("    actor_process --->", process_ind)
+    # env
+    env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
+    # memory
+    # model
     cpu_model = model_prototype(args.model_params)
     # sync global model to local
     cpu_model.load_state_dict(global_model.state_dict())
@@ -29,8 +33,10 @@ def continuous_actor(process_ind, args,
 def continuous_learner(process_ind, args,
                        model_prototype,
                        global_model):
-    # init
     print("  learner_process --->", process_ind)
+    # env
+    # memory
+    # model
     local_device = torch.device('cuda')
     global_device = torch.device('cpu')
     gpu_model = model_prototype(args.model_params).to(local_device)
@@ -38,7 +44,7 @@ def continuous_learner(process_ind, args,
     gpu_model.load_state_dict(global_model.state_dict())
 
     # params
-    # optimizer
+    # criteria and optimizer
     actor_optimizer = args.agent_params.optim(gpu_model.actor.parameters())
     critic_optimizer = args.agent_params.optim(gpu_model.critic.parameters())
 
@@ -72,10 +78,14 @@ def continuous_learner(process_ind, args,
 
 
 def continuous_evaluator(process_ind, args,
+                         env_prototype,
                          model_prototype,
                          global_model):
-    # init
     print("evaluator_process --->", process_ind)
+    # env
+    env = env_prototype(args.env_params, process_ind)
+    # memory
+    # model
     cpu_model = model_prototype(args.model_params)
     # sync global model to local
     cpu_model.load_state_dict(global_model.state_dict())
@@ -90,10 +100,14 @@ def continuous_evaluator(process_ind, args,
 
 
 def continuous_tester(process_ind, args,
+                      env_prototype,
                       model_prototype,
                       global_model):
-    # init
     print("   tester_process --->", process_ind)
+    # env
+    env = env_prototype(args.env_params, process_ind)
+    # memory
+    # model
     cpu_model = model_prototype(args.model_params)
     # sync global model to local
     cpu_model.load_state_dict(global_model.state_dict())
