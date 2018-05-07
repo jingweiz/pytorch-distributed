@@ -16,14 +16,15 @@ def continuous_actor(process_ind, args,
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
     # model
-    cpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape)
+    local_device = torch.device('cpu')
+    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
-    cpu_model.load_state_dict(global_model.state_dict())
+    local_model.load_state_dict(global_model.state_dict())
 
     # params
 
     # setup
-    cpu_model.eval()
+    local_model.eval()
     torch.set_grad_enabled(False)
 
     # main control loop
@@ -41,7 +42,7 @@ def continuous_actor(process_ind, args,
     while step < args.agent_params.steps: # TODO: what should be the condition here???
         print(step)
         # sync global model to local
-        cpu_model.load_state_dict(global_model.state_dict())    # TODO: check when to update?
+        local_model.load_state_dict(global_model.state_dict())    # TODO: check when to update?
         # # deal w/ reset
         # if flag_reset:
         #     # reset episode stats
@@ -52,7 +53,7 @@ def continuous_actor(process_ind, args,
         #     # flags
         #     flag_reset = False
         # # run a single step
-        # # action = cpu_model()
+        # # action = local_model()
 
         # update counters & stats
         step += 1
@@ -68,24 +69,24 @@ def continuous_learner(process_ind, args,
     # model
     local_device = torch.device('cuda')
     global_device = torch.device('cpu')
-    gpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
+    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
-    gpu_model.load_state_dict(global_model.state_dict())
+    local_model.load_state_dict(global_model.state_dict())
 
     # params
     # criteria and optimizer
-    actor_optimizer = args.agent_params.optim(gpu_model.actor.parameters())
-    critic_optimizer = args.agent_params.optim(gpu_model.critic.parameters())
+    actor_optimizer = args.agent_params.optim(local_model.actor.parameters())
+    critic_optimizer = args.agent_params.optim(local_model.critic.parameters())
 
     # setup
-    gpu_model.train()
+    local_model.train()
     torch.set_grad_enabled(True)
 
     # main control loop
     step = 0
     for step in range(10): # TODO: what should be the condition here???
         input = torch.randn([args.agent_params.batch_size] + args.state_shape, requires_grad=True)
-        output = gpu_model(input.to(local_device))
+        output = local_model(input.to(local_device))
         # TODO: this part is completely made up for now
         actor_loss = args.agent_params.value_criteria(output[0], torch.ones_like(output[0]))
         critic_loss = args.agent_params.value_criteria(output[1], torch.ones_like(output[1]))
@@ -96,10 +97,10 @@ def continuous_learner(process_ind, args,
         critic_optimizer.zero_grad()
         # critic_loss.backward()
         (actor_loss+critic_loss).backward()
-        nn.utils.clip_grad_norm_(gpu_model.parameters(), 100.)
+        nn.utils.clip_grad_norm_(local_model.parameters(), 100.)
 
         # sync local grads to global
-        ensure_global_grads(gpu_model, global_model, global_device)
+        ensure_global_grads(local_model, global_model, global_device)
         # actor_optimizer.step()    # TODO: local keeps updating its own? then periodcally copy the global model
         # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
 
@@ -120,14 +121,15 @@ def continuous_evaluator(process_ind, args,
     env = env_prototype(args.env_params, process_ind)
     # memory
     # model
-    cpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape)
+    local_device = torch.device('cpu')
+    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
-    cpu_model.load_state_dict(global_model.state_dict())
+    local_model.load_state_dict(global_model.state_dict())
 
     # params
 
     # setup
-    cpu_model.eval()
+    local_model.eval()
     torch.set_grad_enabled(False)
 
     # main control loop
@@ -150,14 +152,15 @@ def continuous_tester(process_ind, args,
     env = env_prototype(args.env_params, process_ind)
     # memory
     # model
-    cpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape)
+    local_device = torch.device('cpu')
+    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
-    cpu_model.load_state_dict(global_model.state_dict())
+    local_model.load_state_dict(global_model.state_dict())
 
     # params
 
     # setup
-    cpu_model.eval()
+    local_model.eval()
     torch.set_grad_enabled(False)
 
     # main control loop
