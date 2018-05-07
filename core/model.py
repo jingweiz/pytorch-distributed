@@ -3,11 +3,13 @@ import torch.nn as nn
 
 
 class Model(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, input_dims, output_dims):
         super(Model, self).__init__()
 
         # model_params
         # self.model_device = args.model_device
+        self.input_dims = input_dims
+        self.output_dims = output_dims
 
     def _init_weights(self):
         raise NotImplementedError("not implemented in base calss")

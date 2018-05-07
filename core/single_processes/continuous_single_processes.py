@@ -16,7 +16,7 @@ def continuous_actor(process_ind, args,
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
     # model
-    cpu_model = model_prototype(args.model_params)
+    cpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape)
     # sync global model to local
     cpu_model.load_state_dict(global_model.state_dict())
 
@@ -68,7 +68,7 @@ def continuous_learner(process_ind, args,
     # model
     local_device = torch.device('cuda')
     global_device = torch.device('cpu')
-    gpu_model = model_prototype(args.model_params).to(local_device)
+    gpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
     gpu_model.load_state_dict(global_model.state_dict())
 
@@ -84,9 +84,7 @@ def continuous_learner(process_ind, args,
     # main control loop
     step = 0
     for step in range(10): # TODO: what should be the condition here???
-        batch_size = 8
-        input_dims = [1, 1, 100]
-        input = torch.randn([batch_size] + input_dims, requires_grad=True)
+        input = torch.randn([args.agent_params.batch_size] + args.state_shape, requires_grad=True)
         output = gpu_model(input.to(local_device))
         # TODO: this part is completely made up for now
         actor_loss = args.agent_params.value_criteria(output[0], torch.ones_like(output[0]))
@@ -122,7 +120,7 @@ def continuous_evaluator(process_ind, args,
     env = env_prototype(args.env_params, process_ind)
     # memory
     # model
-    cpu_model = model_prototype(args.model_params)
+    cpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape)
     # sync global model to local
     cpu_model.load_state_dict(global_model.state_dict())
 
@@ -152,7 +150,7 @@ def continuous_tester(process_ind, args,
     env = env_prototype(args.env_params, process_ind)
     # memory
     # model
-    cpu_model = model_prototype(args.model_params)
+    cpu_model = model_prototype(args.model_params, args.state_shape, args.action_shape)
     # sync global model to local
     cpu_model.load_state_dict(global_model.state_dict())
 

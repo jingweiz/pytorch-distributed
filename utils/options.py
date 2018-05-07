@@ -31,7 +31,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 4
+        self.num_actors = 1
         self.num_learners = 1
 
         # prefix for saving models&logs
@@ -56,10 +56,18 @@ class EnvParams(Params):
     def __init__(self):
         super(EnvParams, self).__init__()
 
-        if self.env_type == "gym":
-            self.gym_log_dir = None     # When not None, log will be recoreded by baselines monitor
+        # for preprocessing the states before outputing from env
+        if "mlp" in self.model_type:    # low dim inputs, no preprocessing or resizing
+            self.state_cha = 1
+            self.state_hei = 1          #
+            self.state_wid = None       # depends on the env
+        elif "cnn" in self.model_type:  # raw image inputs, need to resize or crop to this step_size
+            self.state_cha = 1
             self.state_hei = 48         # TODO:
             self.state_wid = 48         # TODO:
+
+        if self.env_type == "gym":
+            self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
 
 
 class MemoryParams(Params):
@@ -93,7 +101,7 @@ class AgentParams(Params):
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
             self.optim = SharedAdam
-            # hyperparameters
+            # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 10   # max #iterations
             self.early_stop          = 250  # max #steps per episode
@@ -106,6 +114,18 @@ class AgentParams(Params):
             self.eval_steps          = 1000
             self.prog_freq           = self.eval_freq
             self.test_nepisodes      = 50
+            # off-policy specifics
+            self.learn_start         = 50000    # start update params after this many steps
+            self.batch_size          = 32
+            self.valid_size          = 500
+            self.eps_start           = 1
+            self.eps_end             = 0.1
+            self.eps_eval            = 0.#0.05
+            self.eps_decay           = 1000000
+            self.target_model_update = 10000
+            self.action_repetition   = 4
+            self.memory_interval     = 1
+            self.train_interval      = 4
 
 
 class Options(Params):

@@ -18,6 +18,10 @@ class Env(object):
         self.env_type   = args.env_type
         self.game       = args.game
 
+        self.state_cha = args.state_cha
+        self.state_hei = args.state_hei
+        self.state_wid = args.state_wid
+
         # setup
         self._reset_experience()
 
@@ -32,10 +36,10 @@ class Env(object):
         return Experience(state0 = self.exp_state0, # NOTE: here state0 is always None
                           action = self.exp_action,
                           reward = self.exp_reward,
-                          state1 = self._preprocessState(self.exp_state1),
+                          state1 = self._preprocess_state(self.exp_state1),
                           terminal1 = self.exp_terminal1)
 
-    def _preprocessState(self, state):
+    def _preprocess_state(self, state):
         raise NotImplementedError("not implemented in base class")
 
     @property

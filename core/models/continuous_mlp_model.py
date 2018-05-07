@@ -7,12 +7,10 @@ from core.model import Model
 
 
 class ContinuousMlpModel(Model):
-    def __init__(self, args):
-        super(ContinuousMlpModel, self).__init__(args)
+    def __init__(self, args, input_dims, output_dims):
+        super(ContinuousMlpModel, self).__init__(args, input_dims, output_dims)
 
         # model_params for this model
-        self.input_dims = (1, 1, 100)   # TODO: should get from args
-        self.output_dims = 9            # TODO: should get from args
 
         # actor
         self.actor = nn.Sequential(

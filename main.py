@@ -40,7 +40,9 @@ if __name__ == '__main__':
     opt.memory_params.reward_shape = opt.reward_shape
     global_memory = memory_prototype(opt.memory_params)
     # shared model
-    global_model = model_prototype(opt.model_params)
+    # opt.model_params.input_dims = opt.state_shape
+    # opt.model_params.output_dims = opt.action_shape
+    global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_shape)
     global_model.share_memory() # gradients are allocated lazily, so they are not shared here
 
     processes = []
