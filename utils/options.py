@@ -31,7 +31,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 2
+        self.num_actors = 1
         self.num_learners = 1
 
         # prefix for saving models&logs
@@ -68,6 +68,10 @@ class EnvParams(Params):
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
+            if self.game == "Pendulum-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
+                self.early_stop = 2000  # max #steps per episode
+            else:
+                self.early_stop = None
 
 
 class MemoryParams(Params):
@@ -104,7 +108,6 @@ class AgentParams(Params):
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 20   # max #iterations
-            self.early_stop          = 250  # max #steps per episode
             self.gamma               = 0.99
             self.clip_grad           = 0.5#np.inf
             self.lr                  = 1e-4
@@ -115,8 +118,8 @@ class AgentParams(Params):
             self.prog_freq           = self.eval_freq
             self.test_nepisodes      = 50
             # off-policy specifics
-            self.learn_start         = 50000    # start update params after this many steps
-            self.batch_size          = 32
+            self.learn_start         = 25   # start update params after this many steps
+            self.batch_size          = 16
             self.valid_size          = 500
             self.eps_start           = 1
             self.eps_end             = 0.1

@@ -42,7 +42,10 @@ class GymEnv(Env):
         self.action_high = self.env.action_space.high
 
     def _preprocess_state(self, state):
-        return state # TODO
+        return state.reshape(self.state_shape) # TODO
+
+    def _preprocess_action(self, action):
+        return action.reshape(self.action_shape) # TODO
 
     @property
     def state_shape(self):  # NOTE: here returns the shape after preprocessing, i.e., the shape that gets passed out that's pushed into memory
@@ -57,7 +60,7 @@ class GymEnv(Env):
         return self.env.action_space.shape[0]
 
     def step(self, action):
-        self.exp_action = action
+        self.exp_action = self._preprocess_action(action)
         execute_action = np.clip(action*self.action_high,
                 self.action_low,
                 self.action_high)
@@ -66,5 +69,5 @@ class GymEnv(Env):
 
     def reset(self):
         self._reset_experience()
-        self.exp_state1 = self.env.reset().reshape(-1,1)
+        self.exp_state1 = self.env.reset()
         return self._get_experience()

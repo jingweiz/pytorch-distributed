@@ -5,6 +5,13 @@ from collections import namedtuple
 # NOTE: when return from Env(), state0 is always None
 Experience = namedtuple('Experience', 'state0, action, reward, state1, terminal1')
 
+def reset_experience():
+    return Experience(state0 = None,
+                      action = None,
+                      reward = None,
+                      state1 = None,
+                      terminal1 = False)
+
 
 def ensure_global_grads(local_model, global_model, global_device):
     for local_param, global_param in zip(local_model.parameters(),

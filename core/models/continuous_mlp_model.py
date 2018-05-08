@@ -70,3 +70,9 @@ class ContinuousMlpModel(Model):
         action_vb = self.forward_actor(input_vb)
         qvalue_vb = self.forward_critic(input_vb, action_vb)
         return action_vb, qvalue_vb
+
+    def get_action(self, input, add_noise=False):
+        input_vb = torch.FloatTensor(input).unsqueeze(0)
+        action_vb = self.forward_actor(input_vb)
+        action = action_vb.numpy()
+        return action

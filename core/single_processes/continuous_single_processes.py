@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.multiprocessing as mp
 from tensorboardX import SummaryWriter
 
+from utils.helpers import Experience, reset_experience
 from utils.helpers import ensure_global_grads
 
 
@@ -53,36 +54,66 @@ def continuous_actor(process_ind, args,
     torch.set_grad_enabled(False)
 
     # main control loop
+    experience = reset_experience()
     # counters
     step = 0
     episode_steps = 0
     episode_reward = 0.
     total_steps = 0
-    total_rewards = 0.
+    total_reward = 0.
     nepisodes = 0
     nepisodes_solved = 0
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     last_state1 = None
-    while global_learner_step.value < args.agent_params.steps: # TODO: what should be the condition here???
-        # sync global model to local
-        local_model.load_state_dict(global_model.state_dict())    # TODO: check when to update?
-        # # deal w/ reset
-        # if flag_reset:
-        #     # reset episode stats
-        #     episode_steps = 0
-        #     episode_reward = 0.
-        #     # reset game
-        #     env.reset()
-        #     # flags
-        #     flag_reset = False
-        # # run a single step
-        # # action = local_model()
+    while global_learner_step.value < args.agent_params.steps:
+        # deal w/ reset
+        if flag_reset:
+            # sync global model to local before every new episode # TODO: check when to update?
+            local_model.load_state_dict(global_model.state_dict())
+            # reset episode stats
+            episode_steps = 0
+            episode_reward = 0.
+            # reset game
+            experience = env.reset()
+            assert experience.state1 is not None
+            last_state1 = experience.state1
+            # flags
+            flag_reset = False
+
+        # run a single step
+        action = local_model.get_action(experience.state1) # TODO: add noise???
+        experience = env.step(action)
+
+        # push to memory
+        global_memory.feed((last_state1,
+                            experience.action,
+                            experience.reward,
+                            experience.state1,
+                            experience.terminal1))
+        last_state1 = experience.state1
+
+        # check conditions & update flags
+        if experience.terminal1:
+            nepisodes_solved += 1
+            flag_reset = True
+        if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
+           flag_reset = True
 
         # update counters & stats
-        step += 1
         global_actor_step.value += 1
-        print("  actor --->   global_actor_step --->", global_actor_step.value, step)
+        step += 1
+        episode_steps += 1
+        episode_reward += experience.reward
+        if flag_reset:
+            nepisodes += 1
+            total_steps + episode_steps
+            total_reward += episode_reward
+        # print("  actor --->   global_actor_step --->", global_actor_step.value, step, global_memory.size)
+
+        # report training stats
+
+        # evaluation & checkpointing
 
 
 def continuous_learner(process_ind, args,
@@ -113,8 +144,10 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
-    while global_learner_step.value < args.agent_params.steps: # TODO: what should be the condition here???
+    while global_learner_step.value < args.agent_params.steps:# and global_actor_step.value >= args.agent_params.learn_start:#TODO: should use memory.size to judge, but that value is misfunctioning !!!
+        # input = global_memory.sample(args.agent_params.batch_size)
         input = torch.randn([args.agent_params.batch_size] + args.state_shape, requires_grad=True)
+        print("input.size() --->", input.size())
         output = local_model(input.to(local_device))
         # TODO: this part is completely made up for now
         actor_loss = args.agent_params.value_criteria(output[0], torch.ones_like(output[0]))
@@ -136,7 +169,7 @@ def continuous_learner(process_ind, args,
         # update counters & stats
         step += 1
         global_learner_step.value += 1
-        print("learner ---> global_learner_step --->", global_learner_step.value)
+        print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size)
 
 
 def continuous_evaluator(process_ind, args,
