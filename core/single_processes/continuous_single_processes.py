@@ -6,12 +6,37 @@ from tensorboardX import SummaryWriter
 from utils.helpers import ensure_global_grads
 
 
+def continuous_logger(process_ind, args,
+                      loggers):
+    print("---------------------------->", process_ind, "logger")
+    # loggers
+    global_actor_step, global_learner_step = loggers
+
+    # set up board
+    board = SummaryWriter(args.log_dir)
+    # board.add_text('config', str(args.num_actors) + 'actors(x ' +
+    #                          str(args.num_envs_per_actor) + 'envs) + ' +
+    #                          str(args.num_learners) + 'learners' + ' | ' +
+    #                          args.agent_type + ' | ' +
+    #                          args.env_type + ' | ' + args.game + ' | ' +
+    #                          args.memory_type + ' | ' +
+    #                          args.model_type)
+    # for i in range(100):
+    #     board.add_scalar("stats/test", torch.randn(1), i)
+    # while global_learner_step.value < args.agent_params.steps:
+    #     print("logger ---> global_actor_step   --->", global_actor_step.value)
+    #     print("logger ---> global_learner_step --->", global_learner_step.value)
+
+
 def continuous_actor(process_ind, args,
+                     loggers,
                      env_prototype,
                      model_prototype,
                      global_memory,
                      global_model):
     print("---------------------------->", process_ind, "actor")
+    # loggers
+    global_actor_step, global_learner_step = loggers
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
@@ -39,8 +64,7 @@ def continuous_actor(process_ind, args,
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     last_state1 = None
-    while step < args.agent_params.steps: # TODO: what should be the condition here???
-        print(step)
+    while global_learner_step.value < args.agent_params.steps: # TODO: what should be the condition here???
         # sync global model to local
         local_model.load_state_dict(global_model.state_dict())    # TODO: check when to update?
         # # deal w/ reset
@@ -57,13 +81,18 @@ def continuous_actor(process_ind, args,
 
         # update counters & stats
         step += 1
+        global_actor_step.value += 1
+        print("  actor --->   global_actor_step --->", global_actor_step.value, step)
+
 
 def continuous_learner(process_ind, args,
+                       loggers,
                        model_prototype,
                        global_memory,
                        global_model):
-    board = SummaryWriter(args.log_dir)
     print("---------------------------->", process_ind, "learner")
+    # loggers
+    global_actor_step, global_learner_step = loggers
     # env
     # memory
     # model
@@ -84,7 +113,7 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
-    for step in range(10): # TODO: what should be the condition here???
+    while global_learner_step.value < args.agent_params.steps: # TODO: what should be the condition here???
         input = torch.randn([args.agent_params.batch_size] + args.state_shape, requires_grad=True)
         output = local_model(input.to(local_device))
         # TODO: this part is completely made up for now
@@ -104,19 +133,18 @@ def continuous_learner(process_ind, args,
         # actor_optimizer.step()    # TODO: local keeps updating its own? then periodcally copy the global model
         # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
 
-        # logging
-        board.add_scalar("learner/test", torch.randn(1), step)
-
         # update counters & stats
         step += 1
+        global_learner_step.value += 1
+        print("learner ---> global_learner_step --->", global_learner_step.value)
 
 
 def continuous_evaluator(process_ind, args,
+                         loggers,
                          env_prototype,
                          model_prototype,
                          global_model):
     print("---------------------------->", process_ind, "evaluator")
-    board = SummaryWriter(args.log_dir)
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
@@ -136,14 +164,12 @@ def continuous_evaluator(process_ind, args,
     # counters
     step = 0
     while step < args.agent_params.steps:
-        # logging
-        board.add_scalar("evaluator/test", torch.randn(1), step)
-
         # update counters & stats
         step += 1
 
 
 def continuous_tester(process_ind, args,
+                      loggers,
                       env_prototype,
                       model_prototype,
                       global_model):

@@ -18,7 +18,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18050600"    # "yymmdd##"
+        self.timestamp  = "18050800"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 1
@@ -31,7 +31,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 1
+        self.num_actors = 2
         self.num_learners = 1
 
         # prefix for saving models&logs
@@ -103,7 +103,7 @@ class AgentParams(Params):
             self.optim = SharedAdam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 10   # max #iterations
+            self.steps               = 20   # max #iterations
             self.early_stop          = 250  # max #steps per episode
             self.gamma               = 0.99
             self.clip_grad           = 0.5#np.inf
