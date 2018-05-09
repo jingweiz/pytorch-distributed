@@ -92,6 +92,7 @@ def continuous_actor(process_ind, args,
                             experience.state1,
                             experience.terminal1))
         last_state1 = experience.state1
+        print("global memory size--->", process_ind,  global_memory.size)
 
         # check conditions & update flags
         if experience.terminal1:
@@ -101,7 +102,8 @@ def continuous_actor(process_ind, args,
            flag_reset = True
 
         # update counters & stats
-        global_actor_step.value += 1
+        with global_actor_step.get_lock():
+            global_actor_step.value += 1
         step += 1
         episode_steps += 1
         episode_reward += experience.reward
@@ -168,7 +170,8 @@ def continuous_learner(process_ind, args,
 
         # update counters & stats
         step += 1
-        global_learner_step.value += 1
+        with global_learner_step.get_lock():
+            global_learner_step.value += 1
         print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size)
 
 

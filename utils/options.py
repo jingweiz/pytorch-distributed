@@ -79,7 +79,7 @@ class MemoryParams(Params):
         super(MemoryParams, self).__init__()
 
         if self.memory_type == "shared":
-            self.memory_size = 50#1e6
+            self.memory_size = 100#1e6
 
 
 class ModelParams(Params):

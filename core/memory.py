@@ -1,5 +1,5 @@
 import numpy as np
-
+import torch.multiprocessing as mp
 
 class Memory(object):
     def __init__(self, args, dtype=np.float32):
@@ -14,7 +14,7 @@ class Memory(object):
         self.memory_size = args.memory_size
 
         # setup
-        self.pos = 0
+        self.pos = mp.Value('l', 0)
         self.full = False
 
     @property

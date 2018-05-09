@@ -30,20 +30,20 @@ class SharedMemory(Memory):
     def _feed(self, experience):
         state0, action, reward, state1, terminal1 = experience
 
-        self.state0s[self.pos][:] = torch.FloatTensor(state0)
-        self.actions[self.pos][:] = torch.FloatTensor(action)
-        self.rewards[self.pos][:] = torch.FloatTensor(reward)
-        self.state1s[self.pos][:] = torch.FloatTensor(state1)
-        self.terminal1s[self.pos] = torch.FloatTensor([terminal1]) # TODO: is this the best way to store it???
-
-        self.pos += 1
-        if self.pos == self.memory_size:
+        with self.pos.get_lock():
+            self.state0s[self.pos.value][:] = torch.FloatTensor(state0)
+            self.actions[self.pos.value][:] = torch.FloatTensor(action)
+            self.rewards[self.pos.value][:] = torch.FloatTensor(reward)
+            self.state1s[self.pos.value][:] = torch.FloatTensor(state1)
+            self.terminal1s[self.pos.value] = torch.FloatTensor([terminal1]) # TODO: is this the best way to store it???
+            self.pos.value += 1
+        if self.pos.value == self.memory_size:
             self.full = True
-            self.pos = 0
+            self.pos.value = 0
 
     def _sample(self, batch_size):
-        upper_bound = self.memory_size if self.full else self.pos
-        print(self.full, self.pos, self.size, upper_bound)
+        upper_bound = self.memory_size if self.full else self.pos.value
+        print(self.full, self.pos.value, self.size, upper_bound)
         batch_inds = torch.LongTensor(np.random.randint(0, upper_bound, size=batch_size))
         return (self.state0s[batch_inds],
                 self.actions[batch_inds],
@@ -58,3 +58,9 @@ class SharedMemory(Memory):
     def sample(self, batch_size):
         with self.memory_lock:
             self._sample(batch_size)
+
+    @property
+    def size(self):
+        if self.full:
+            return self.memory_size
+        return self.pos.value
