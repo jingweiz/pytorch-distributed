@@ -31,7 +31,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 2 
+        self.num_actors = 2
         self.num_learners = 1
 
         # prefix for saving models&logs
@@ -125,7 +125,7 @@ class AgentParams(Params):
             self.eps_end             = 0.1
             self.eps_eval            = 0.#0.05
             self.eps_decay           = 1000000
-            self.target_model_update = 10000
+            self.target_model_update = 1e-3#1000
             self.action_repetition   = 4
             self.memory_interval     = 1
             self.train_interval      = 4

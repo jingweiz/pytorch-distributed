@@ -24,11 +24,13 @@ if __name__ == '__main__':
     opt.state_shape = dummy_env.state_shape
     opt.action_shape = dummy_env.action_shape
     opt.reward_shape = opt.agent_params.num_tasks
+    opt.terminal_shape = opt.agent_params.num_tasks
     del dummy_env
     # shared memory
     opt.memory_params.state_shape = opt.state_shape
     opt.memory_params.action_shape = opt.action_shape
     opt.memory_params.reward_shape = opt.reward_shape
+    opt.memory_params.terminal_shape = opt.terminal_shape
     global_memory = memory_prototype(opt.memory_params)
     # shared model
     global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_shape)

@@ -4,6 +4,7 @@ import torch.multiprocessing as mp
 from tensorboardX import SummaryWriter
 
 from utils.helpers import Experience, reset_experience
+from utils.helpers import update_target_model
 from utils.helpers import ensure_global_grads
 
 
@@ -131,8 +132,10 @@ def continuous_learner(process_ind, args,
     local_device = torch.device('cuda')
     global_device = torch.device('cpu')
     local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
+    local_target_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
     local_model.load_state_dict(global_model.state_dict())
+    update_target_model(local_model, local_target_model) # do a hard update in the beginning
 
     # params
     # criteria and optimizer
@@ -145,33 +148,59 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
-    while global_learner_step.value < args.agent_params.steps:# and global_actor_step.value >= args.agent_params.learn_start:#TODO: should use memory.size to judge, but that value is misfunctioning !!!
-        # input = global_memory.sample(args.agent_params.batch_size)
-        input = torch.randn([args.agent_params.batch_size] + args.state_shape, requires_grad=True)
-        print("input.size() --->", input.size())
-        output = local_model(input.to(local_device))
-        # TODO: this part is completely made up for now
-        actor_loss = args.agent_params.value_criteria(output[0], torch.ones_like(output[0]))
-        critic_loss = args.agent_params.value_criteria(output[1], torch.ones_like(output[1]))
-        # print(actor_loss)
-        # print(critic_loss)
-        actor_optimizer.zero_grad()
-        # actor_loss.backward()
-        critic_optimizer.zero_grad()
-        # critic_loss.backward()
-        (actor_loss+critic_loss).backward()
-        nn.utils.clip_grad_norm_(local_model.parameters(), 100.)
+    while global_learner_step.value < args.agent_params.steps:
+        print("=======================>")
+        if global_memory.size >= args.agent_params.learn_start:
+            # sample batch from global_memory
+            experiences = global_memory.sample(args.agent_params.batch_size)
+            state0s, actions, rewards, state1s, terminal1s = experiences
+            # noisy_actions_vb = actions.requires_grad_().to(local_device)
+            # rewards = rewards.requires_grad_().to(local_device)
+            # state1s = state1s.requires_grad_().to(local_device)
+            # terminal1s = terminal1s.requires_grad_().to(local_device)
+            print("=======================>")
+            print("state0s.size() --->", state0s.size())
+            # print("actions.size() --->", noisy_actions_vb.size())
+            print("actions.size() --->", actions.size())
+            print("rewards.size() --->", rewards.size())
+            print("state1s.size() --->", state1s.size())
+            print("terminal1s.size() --->", terminal1s.size())
 
-        # sync local grads to global
-        ensure_global_grads(local_model, global_model, global_device)
-        # actor_optimizer.step()    # TODO: local keeps updating its own? then periodcally copy the global model
-        # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
+            # learn from this batch - critic loss
+            print("=======================>")
+            # state0s = state0s.requires_grad_().to(local_device)
+            # noisy_actions = actions.requires_grad_().to(local_device)
+            state0s = state0s.to(local_device)
+            noisy_actions = actions.to(local_device)
 
-        # update counters & stats
-        with global_learner_step.get_lock():
-            global_learner_step.value += 1
-        step += 1
-        print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size, global_memory.full.value)
+            _, target_qvalues = local_target_model(state1s.to(local_device))
+            target_qvalues = rewards.to(local_device) + args.agent_params.gamma * target_qvalues.detach() * (1 - terminal1s.to(local_device))
+            print("target_qvalues --->", target_qvalues.requires_grad)
+            predict_qvalues = local_model.forward_critic(state0s, noisy_actions)
+            print(predict_qvalues.requires_grad)
+
+            # TODO: this part is completely made up for now
+            actor_loss = args.agent_params.value_criteria(output[0], torch.ones_like(output[0]))
+            critic_loss = args.agent_params.value_criteria(output[1], torch.ones_like(output[1]))
+            # print(actor_loss)
+            # print(critic_loss)
+            actor_optimizer.zero_grad()
+            # actor_loss.backward()
+            critic_optimizer.zero_grad()
+            # critic_loss.backward()
+            (actor_loss+critic_loss).backward()
+            nn.utils.clip_grad_norm_(local_model.parameters(), 100.)
+
+            # sync local grads to global
+            ensure_global_grads(local_model, global_model, global_device)
+            # actor_optimizer.step()    # TODO: local keeps updating its own? then periodcally copy the global model
+            # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
+
+            # update counters & stats
+            with global_learner_step.get_lock():
+                global_learner_step.value += 1
+            step += 1
+            print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size, global_memory.full.value)
 
 
 def continuous_evaluator(process_ind, args,

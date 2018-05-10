@@ -8,7 +8,8 @@ class Memory(object):
         # # params
         self.state_shape = args.state_shape
         self.action_shape = args.action_shape
-        self.reward_shape = args.reward_shape
+        self.reward_shape = args.reward_shape       # num_tasks
+        self.terminal_shape = args.terminal_shape   # num_tasks
 
         # memory_params
         self.memory_size = args.memory_size
