@@ -49,6 +49,8 @@ def continuous_actor(process_ind, args,
     local_model.load_state_dict(global_model.state_dict())
 
     # params
+    random_process = args.agent_params.random_process(size=args.action_shape,
+        theta=0.15, sigma=0.3, n_steps_annealing=args.memory_params.memory_size*100)
 
     # setup
     local_model.eval()
@@ -83,7 +85,7 @@ def continuous_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        action = local_model.get_action(experience.state1) # TODO: add noise???
+        action = local_model.get_action(experience.state1, random_process.sample())
         experience = env.step(action)
 
         # push to memory
@@ -122,25 +124,25 @@ def continuous_learner(process_ind, args,
                        loggers,
                        model_prototype,
                        global_memory,
-                       global_model):
+                       global_model,
+                       global_optimizers):
     print("---------------------------->", process_ind, "learner")
     # loggers
     global_actor_step, global_learner_step = loggers
     # env
     # memory
     # model
-    local_device = torch.device('cuda')
+    local_device = torch.device('cuda') # TODO: should assign each learner to a seperate gpu
     global_device = torch.device('cpu')
     local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     local_target_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
     # sync global model to local
     local_model.load_state_dict(global_model.state_dict())
     update_target_model(local_model, local_target_model) # do a hard update in the beginning
+    # optimizers
+    global_actor_optimizer, global_critic_optimizer = global_optimizers
 
     # params
-    # criteria and optimizer
-    global_actor_optimizer = args.agent_params.optim(global_model.actor.parameters())
-    global_critic_optimizer = args.agent_params.optim(global_model.critic.parameters())
 
     # setup
     local_model.train()
@@ -148,11 +150,9 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
-    print("=======================>")
-    print("=======================>", global_memory.size)
     while global_learner_step.value < args.agent_params.steps:
-        print("=======================>", global_memory.size)
         if global_memory.size >= args.agent_params.learn_start:
+            print("learner ---> global_learner_step --->", process_ind, global_learner_step.value)
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
             state0s, actions, rewards, state1s, terminal1s = experiences
@@ -195,8 +195,6 @@ def continuous_learner(process_ind, args,
             with global_learner_step.get_lock():
                 global_learner_step.value += 1
             step += 1
-            print("learner ---> global_learner_step --->", global_learner_step.value)
-
 
 def continuous_evaluator(process_ind, args,
                          loggers,

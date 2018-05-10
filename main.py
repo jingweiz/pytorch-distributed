@@ -35,6 +35,11 @@ if __name__ == '__main__':
     # shared model
     global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_shape)
     global_model.share_memory() # gradients are allocated lazily, so they are not shared here
+    # optimizer
+    global_actor_optimizer = opt.agent_params.optim(global_model.actor.parameters())
+    global_critic_optimizer = opt.agent_params.optim(global_model.critic.parameters())
+    global_optimizers = {global_actor_optimizer,
+                         global_critic_optimizer}
 
     # global loggers
     # counters
@@ -76,7 +81,8 @@ if __name__ == '__main__':
                                  loggers,
                                  model_prototype,
                                  global_memory,
-                                 global_model
+                                 global_model,
+                                 global_optimizers
                                 ))
             p.start()
             processes.append(p)

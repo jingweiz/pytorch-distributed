@@ -55,24 +55,24 @@ class ContinuousMlpModel(Model):
         nn.init.uniform_(self.critic[1][2].weight.data, -bound, bound)
         nn.init.constant_(self.critic[1][2].bias.data, 0)
 
-    def forward_actor(self, input_vb):
-        input_vb = input_vb.view(input_vb.size(0), -1)
-        action_vb = self.actor(input_vb)
-        return action_vb
-
-    def forward_critic(self, input_vb, action_vb):
-        input_vb = input_vb.view(input_vb.size(0), -1)
-        qx_vb = self.critic[0](input_vb)
-        qvalue_vb = self.critic[1](torch.cat((qx_vb, action_vb), 1))
-        return qvalue_vb
-
-    def forward(self, input_vb):
-        action_vb = self.forward_actor(input_vb)
-        qvalue_vb = self.forward_critic(input_vb, action_vb)
-        return action_vb, qvalue_vb
-
-    def get_action(self, input, add_noise=False):
-        input_vb = torch.FloatTensor(input).unsqueeze(0)
-        action_vb = self.forward_actor(input_vb)
-        action = action_vb.numpy()
+    def forward_actor(self, input):
+        input = input.view(input.size(0), -1)
+        action = self.actor(input)
         return action
+
+    def forward_critic(self, input, action):
+        input = input.view(input.size(0), -1)
+        qx = self.critic[0](input)
+        qvalue = self.critic[1](torch.cat((qx, action), 1))
+        return qvalue
+
+    def forward(self, input):
+        action = self.forward_actor(input)
+        qvalue = self.forward_critic(input, action)
+        return action, qvalue
+
+    def get_action(self, input, noise=0.):
+        input = torch.FloatTensor(input).unsqueeze(0)
+        action = self.forward_actor(input)
+        action = action.numpy()
+        return action + noise

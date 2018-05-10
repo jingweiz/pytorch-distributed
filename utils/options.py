@@ -5,6 +5,7 @@ from tensorboardX import SummaryWriter
 import torch
 import torch.nn as nn
 
+from utils.random_process import OrnsteinUhlenbeckProcess
 from optims.sharedAdam import SharedAdam
 from optims.sharedRMSprop import SharedRMSprop
 
@@ -18,7 +19,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18050800"    # "yymmdd##"
+        self.timestamp  = "18051000"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 1
@@ -32,7 +33,7 @@ class Params(object):
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
         self.num_actors = 2
-        self.num_learners = 1
+        self.num_learners = 1           # TODO: can also set each learner to a separate device
 
         # prefix for saving models&logs
         self.refs       = self.machine + "_" + self.timestamp
@@ -108,7 +109,7 @@ class AgentParams(Params):
             self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 20   # max #iterations
+            self.steps               = 200   # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = 100#np.inf
             self.lr                  = 1e-4
@@ -130,6 +131,8 @@ class AgentParams(Params):
             self.action_repetition   = 4
             self.memory_interval     = 1
             self.train_interval      = 4
+            # ddpg specifics
+            self.random_process      = OrnsteinUhlenbeckProcess
 
 
 class Options(Params):
