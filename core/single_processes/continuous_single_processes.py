@@ -92,7 +92,7 @@ def continuous_actor(process_ind, args,
                             experience.state1,
                             experience.terminal1))
         last_state1 = experience.state1
-        print("global memory size--->", process_ind,  global_memory.size)
+        print("global memory size--->", process_ind,  global_memory.size, global_memory.full.value)
 
         # check conditions & update flags
         if experience.terminal1:
@@ -169,10 +169,10 @@ def continuous_learner(process_ind, args,
         # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
 
         # update counters & stats
-        step += 1
         with global_learner_step.get_lock():
             global_learner_step.value += 1
-        print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size)
+        step += 1
+        print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size, global_memory.full.value)
 
 
 def continuous_evaluator(process_ind, args,

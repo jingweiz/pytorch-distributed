@@ -14,7 +14,7 @@ class Memory(object):
         self.memory_size = args.memory_size
 
         # setup
-        self.pos = mp.Value('l', 0)
+        self.pos = 0
         self.full = False
 
     @property
