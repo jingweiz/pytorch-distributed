@@ -53,6 +53,11 @@ class Params(object):
         self.log_dir = self.root_dir + "/logs/" + self.refs + "/"
 
 
+class BoardParams(Params):
+    def __init__(self):
+        super(BoardParams, self).__init__()
+
+
 class EnvParams(Params):
     def __init__(self):
         super(EnvParams, self).__init__()
@@ -70,7 +75,7 @@ class EnvParams(Params):
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
             if self.game == "Pendulum-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
-                self.early_stop = 2000  # max #steps per episode
+                self.early_stop = 250   # max #steps per episode
             else:
                 self.early_stop = None
 
@@ -80,7 +85,7 @@ class MemoryParams(Params):
         super(MemoryParams, self).__init__()
 
         if self.memory_type == "shared":
-            self.memory_size = 100#1e6
+            self.memory_size = 1000000
 
 
 class ModelParams(Params):
@@ -109,7 +114,7 @@ class AgentParams(Params):
             self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 200   # max #iterations
+            self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = 100#np.inf
             self.lr                  = 1e-4
@@ -120,19 +125,19 @@ class AgentParams(Params):
             self.prog_freq           = self.eval_freq
             self.test_nepisodes      = 50
             # off-policy specifics
-            self.learn_start         = 25   # start update params after this many steps
-            self.batch_size          = 16
-            self.valid_size          = 500
+            self.learn_start         = 3000   # start update params after this many steps
+            self.batch_size          = 32
+            self.target_model_update = 1e-3#1000
+            # ddpg specifics
+            self.random_process      = OrnsteinUhlenbeckProcess
+            # dqn specifics
             self.eps_start           = 1
             self.eps_end             = 0.1
             self.eps_eval            = 0.#0.05
             self.eps_decay           = 1000000
-            self.target_model_update = 1e-3#1000
             self.action_repetition   = 4
             self.memory_interval     = 1
             self.train_interval      = 4
-            # ddpg specifics
-            self.random_process      = OrnsteinUhlenbeckProcess
 
 
 class Options(Params):

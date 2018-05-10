@@ -7,38 +7,20 @@ from utils.helpers import Experience, reset_experience
 from utils.helpers import update_target_model
 from utils.helpers import ensure_global_grads
 
-
-def continuous_logger(process_ind, args,
-                      loggers):
-    print("---------------------------->", process_ind, "logger")
-    # loggers
-    global_actor_step, global_learner_step = loggers
-
-    # set up board
-    board = SummaryWriter(args.log_dir)
-    # board.add_text('config', str(args.num_actors) + 'actors(x ' +
-    #                          str(args.num_envs_per_actor) + 'envs) + ' +
-    #                          str(args.num_learners) + 'learners' + ' | ' +
-    #                          args.agent_type + ' | ' +
-    #                          args.env_type + ' | ' + args.game + ' | ' +
-    #                          args.memory_type + ' | ' +
-    #                          args.model_type)
-    # for i in range(100):
-    #     board.add_scalar("stats/test", torch.randn(1), i)
-    # while global_learner_step.value < args.agent_params.steps:
-    #     print("logger ---> global_actor_step   --->", global_actor_step.value)
-    #     print("logger ---> global_learner_step --->", global_learner_step.value)
+from utils.options import BoardParams
+board_params = BoardParams()
+board = SummaryWriter(board_params.log_dir)
 
 
 def continuous_actor(process_ind, args,
-                     loggers,
+                     global_counters,
                      env_prototype,
                      model_prototype,
                      global_memory,
                      global_model):
-    print("---------------------------->", process_ind, "actor")
     # loggers
-    global_actor_step, global_learner_step = loggers
+    print("---------------------------->", process_ind, "actor")
+    global_actor_step, global_learner_step = global_counters
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
@@ -83,6 +65,8 @@ def continuous_actor(process_ind, args,
             last_state1 = experience.state1
             # flags
             flag_reset = False
+            # logging
+            board.add_scalar("actor/info", global_actor_step.value, global_learner_step.value)
 
         # run a single step
         action = local_model.get_action(experience.state1, random_process.sample())
@@ -121,14 +105,14 @@ def continuous_actor(process_ind, args,
 
 
 def continuous_learner(process_ind, args,
-                       loggers,
+                       global_counters,
                        model_prototype,
                        global_memory,
                        global_model,
                        global_optimizers):
-    print("---------------------------->", process_ind, "learner")
     # loggers
-    global_actor_step, global_learner_step = loggers
+    print("---------------------------->", process_ind, "learner")
+    global_actor_step, global_learner_step = global_counters
     # env
     # memory
     # model
@@ -150,7 +134,9 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
+    print("--------------", global_memory.size)
     while global_learner_step.value < args.agent_params.steps:
+        print("--------------------", global_memory.size, args.agent_params.learn_start)
         if global_memory.size >= args.agent_params.learn_start:
             print("learner ---> global_learner_step --->", process_ind, global_learner_step.value)
             # sample batch from global_memory
@@ -169,8 +155,6 @@ def continuous_learner(process_ind, args,
             actor_loss.backward()
             # TODO: check here if we need clipping
             nn.utils.clip_grad_value_(local_model.actor.parameters(), args.agent_params.clip_grad)
-            # TODO: log to board
-            print(actor_loss)
 
             # learn on this batch - critic loss
             _, target_qvalues = local_target_model(state1s.to(local_device))
@@ -183,8 +167,6 @@ def continuous_learner(process_ind, args,
             critic_loss.backward()
             # TODO: check here if we need clipping
             nn.utils.clip_grad_value_(local_model.critic.parameters(), args.agent_params.clip_grad)
-            # TODO: log to board
-            print(critic_loss)
 
             # learn on this batch - sync local grads to global
             ensure_global_grads(local_model, global_model, global_device)
@@ -196,12 +178,21 @@ def continuous_learner(process_ind, args,
                 global_learner_step.value += 1
             step += 1
 
+            # logging
+            board.add_scalar("learner/actor_loss", actor_loss, global_learner_step.value)
+            board.add_scalar("learner/critic_loss", critic_loss, global_learner_step.value)
+            print(actor_loss)
+            print(critic_loss)
+
+
 def continuous_evaluator(process_ind, args,
-                         loggers,
+                         global_counters,
                          env_prototype,
                          model_prototype,
                          global_model):
+    # loggers
     print("---------------------------->", process_ind, "evaluator")
+    global_actor_step, global_learner_step = global_counters
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
@@ -223,13 +214,13 @@ def continuous_evaluator(process_ind, args,
     while step < args.agent_params.steps:
         # update counters & stats
         step += 1
-
+        board.add_scalar("evaluator/info", global_actor_step.value, global_learner_step.value)
 
 def continuous_tester(process_ind, args,
-                      loggers,
                       env_prototype,
                       model_prototype,
                       global_model):
+    # loggers
     print("---------------------------->", process_ind, "tester")
     # env
     env = env_prototype(args.env_params, process_ind)
