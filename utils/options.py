@@ -31,7 +31,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 1
+        self.num_actors = 2 
         self.num_learners = 1
 
         # prefix for saving models&logs

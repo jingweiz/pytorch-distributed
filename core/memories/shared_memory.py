@@ -39,17 +39,15 @@ class SharedMemory(Memory):
     def _feed(self, experience):
         state0, action, reward, state1, terminal1 = experience
 
-        with self.pos.get_lock():
-            self.state0s[self.pos.value][:] = torch.FloatTensor(state0)
-            self.actions[self.pos.value][:] = torch.FloatTensor(action)
-            self.rewards[self.pos.value][:] = torch.FloatTensor(reward)
-            self.state1s[self.pos.value][:] = torch.FloatTensor(state1)
-            self.terminal1s[self.pos.value] = torch.FloatTensor([terminal1]) # TODO: is this the best way to store it???
-            self.pos.value += 1
-            if self.pos.value == self.memory_size:
-                self.pos.value = 0
-                with self.full.get_lock():
-                    self.full.value = True
+        self.state0s[self.pos.value][:] = torch.FloatTensor(state0)
+        self.actions[self.pos.value][:] = torch.FloatTensor(action)
+        self.rewards[self.pos.value][:] = torch.FloatTensor(reward)
+        self.state1s[self.pos.value][:] = torch.FloatTensor(state1)
+        self.terminal1s[self.pos.value] = torch.FloatTensor([terminal1]) # TODO: is this the best way to store it???
+        self.pos.value += 1
+        if self.pos.value == self.memory_size:
+            self.full.value = True
+            self.pos.value = 0
 
     def _sample(self, batch_size):
         upper_bound = self.memory_size if self.full.value else self.pos.value

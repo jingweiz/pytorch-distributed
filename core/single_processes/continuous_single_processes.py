@@ -92,14 +92,13 @@ def continuous_actor(process_ind, args,
                             experience.state1,
                             experience.terminal1))
         last_state1 = experience.state1
-        print("global memory size--->", process_ind,  global_memory.size, global_memory.full.value)
 
         # check conditions & update flags
         if experience.terminal1:
             nepisodes_solved += 1
             flag_reset = True
         if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
-           flag_reset = True
+            flag_reset = True
 
         # update counters & stats
         with global_actor_step.get_lock():

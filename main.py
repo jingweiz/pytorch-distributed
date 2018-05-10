@@ -36,8 +36,8 @@ if __name__ == '__main__':
 
     # global loggers
     # counters
-    global_actor_step = mp.Value('l', 0) # global frame step counter
-    global_learner_step = mp.Value('l', 0) # global train step counter
+    global_actor_step = mp.Value('l', 0)    # global frame step counter
+    global_learner_step = mp.Value('l', 0)  # global train step counter
     # learner stats
     # evaluator stats
     loggers = {global_actor_step,
