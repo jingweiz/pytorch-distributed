@@ -11,7 +11,7 @@ from optims.sharedRMSprop import SharedRMSprop
 
 CONFIGS = [
 # agent_type,   env_type, game,          memory_type, model_type
-[ "discrete",   "empty",  "",            "shared",    "discrete-mlp"  ], # 0 *
+[ "discrete",   "gym",    "Pong-ram-v0", "shared",    "discrete-mlp"  ], # 0 *
 [ "continuous", "gym",    "Pendulum-v0", "shared",    "continuous-mlp"], # 1 *
 ]
 
@@ -69,8 +69,12 @@ class EnvParams(Params):
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
+
+            # max #steps per episode
             if self.game == "Pendulum-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
-                self.early_stop = 250   # max #steps per episode
+                self.early_stop = 250
+            elif self.game == "Pong-ram-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
+                self.early_stop = None
             else:
                 self.early_stop = None
 
@@ -101,7 +105,29 @@ class AgentParams(Params):
         if 'discrete' in self.agent_type:
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
-            self.optim = SharedAdam
+            # self.optim = SharedAdam
+            self.optim = torch.optim.Adam
+            # generic hyperparameters
+            self.num_tasks           = 1    # NOTE: always put main task at last
+            self.steps               = 1000000 # max #iterations
+            self.gamma               = 0.99
+            self.clip_grad           = 100#np.inf
+            self.lr                  = 1e-4
+            self.lr_decay            = False
+            self.weight_decay        = 0.
+            self.eval_freq           = 1000#00  # NOTE: here means every this many steps
+            self.eval_steps          = 1000
+            self.prog_freq           = self.eval_freq
+            self.test_nepisodes      = 50
+            # off-policy specifics
+            self.learn_start         = 3000   # start update params after this many steps
+            self.batch_size          = 32
+            self.target_model_update = 1e-3#1000
+            # dqn specifics
+            self.eps_start           = 1
+            self.eps_end             = 0.1
+            self.eps_eval            = 0.#0.05
+            self.eps_decay           = 1000000
         elif 'continuous' in self.agent_type:
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
@@ -125,14 +151,6 @@ class AgentParams(Params):
             self.target_model_update = 1e-3#1000
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
-            # dqn specifics
-            self.eps_start           = 1
-            self.eps_end             = 0.1
-            self.eps_eval            = 0.#0.05
-            self.eps_decay           = 1000000
-            self.action_repetition   = 4
-            self.memory_interval     = 1
-            self.train_interval      = 4
 
 
 class Options(Params):

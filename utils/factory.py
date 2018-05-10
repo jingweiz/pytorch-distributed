@@ -18,6 +18,7 @@ from core.memories.shared_memory import SharedMemory
 MemoryDict = {"shared": SharedMemory,
               "none":   None}
 
+from core.models.discrete_mlp_model import DiscreteMlpModel
 from core.models.continuous_mlp_model import ContinuousMlpModel
-ModelDict = {"discrete-mlp":   None,
+ModelDict = {"discrete-mlp":   DiscreteMlpModel,
              "continuous-mlp": ContinuousMlpModel}
