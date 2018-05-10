@@ -139,8 +139,8 @@ def continuous_learner(process_ind, args,
 
     # params
     # criteria and optimizer
-    actor_optimizer = args.agent_params.optim(local_model.actor.parameters())
-    critic_optimizer = args.agent_params.optim(local_model.critic.parameters())
+    global_actor_optimizer = args.agent_params.optim(global_model.actor.parameters())
+    global_critic_optimizer = args.agent_params.optim(global_model.critic.parameters())
 
     # setup
     local_model.train()
@@ -148,59 +148,54 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
+    print("=======================>")
+    print("=======================>", global_memory.size)
     while global_learner_step.value < args.agent_params.steps:
-        print("=======================>")
+        print("=======================>", global_memory.size)
         if global_memory.size >= args.agent_params.learn_start:
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
             state0s, actions, rewards, state1s, terminal1s = experiences
-            # noisy_actions_vb = actions.requires_grad_().to(local_device)
-            # rewards = rewards.requires_grad_().to(local_device)
-            # state1s = state1s.requires_grad_().to(local_device)
-            # terminal1s = terminal1s.requires_grad_().to(local_device)
-            print("=======================>")
-            print("state0s.size() --->", state0s.size())
-            # print("actions.size() --->", noisy_actions_vb.size())
-            print("actions.size() --->", actions.size())
-            print("rewards.size() --->", rewards.size())
-            print("state1s.size() --->", state1s.size())
-            print("terminal1s.size() --->", terminal1s.size())
 
-            # learn from this batch - critic loss
-            print("=======================>")
-            # state0s = state0s.requires_grad_().to(local_device)
-            # noisy_actions = actions.requires_grad_().to(local_device)
+            # learn on this batch - setup
             state0s = state0s.to(local_device)
-            noisy_actions = actions.to(local_device)
 
+            # learn on this batch - actor loss
+            _, qvalues = local_model(state0s)
+            actor_loss = - qvalues.mean()
+
+            global_actor_optimizer.zero_grad()
+            local_model.actor.zero_grad()
+            actor_loss.backward()
+            # TODO: check here if we need clipping
+            nn.utils.clip_grad_value_(local_model.actor.parameters(), args.agent_params.clip_grad)
+            # TODO: log to board
+            print(actor_loss)
+
+            # learn on this batch - critic loss
             _, target_qvalues = local_target_model(state1s.to(local_device))
             target_qvalues = rewards.to(local_device) + args.agent_params.gamma * target_qvalues.detach() * (1 - terminal1s.to(local_device))
-            print("target_qvalues --->", target_qvalues.requires_grad)
-            predict_qvalues = local_model.forward_critic(state0s, noisy_actions)
-            print(predict_qvalues.requires_grad)
+            predict_qvalues = local_model.forward_critic(state0s, actions.to(local_device))
+            critic_loss = args.agent_params.value_criteria(predict_qvalues, target_qvalues)
 
-            # TODO: this part is completely made up for now
-            actor_loss = args.agent_params.value_criteria(output[0], torch.ones_like(output[0]))
-            critic_loss = args.agent_params.value_criteria(output[1], torch.ones_like(output[1]))
-            # print(actor_loss)
-            # print(critic_loss)
-            actor_optimizer.zero_grad()
-            # actor_loss.backward()
-            critic_optimizer.zero_grad()
-            # critic_loss.backward()
-            (actor_loss+critic_loss).backward()
-            nn.utils.clip_grad_norm_(local_model.parameters(), 100.)
+            global_critic_optimizer.zero_grad()
+            local_model.critic.zero_grad()
+            critic_loss.backward()
+            # TODO: check here if we need clipping
+            nn.utils.clip_grad_value_(local_model.critic.parameters(), args.agent_params.clip_grad)
+            # TODO: log to board
+            print(critic_loss)
 
-            # sync local grads to global
+            # learn on this batch - sync local grads to global
             ensure_global_grads(local_model, global_model, global_device)
-            # actor_optimizer.step()    # TODO: local keeps updating its own? then periodcally copy the global model
-            # critic_optimizer.step()   # TODO: local keeps updating its own? then periodcally copy the global model
+            global_actor_optimizer.step()
+            global_actor_optimizer.step()
 
             # update counters & stats
             with global_learner_step.get_lock():
                 global_learner_step.value += 1
             step += 1
-            print("learner ---> global_learner_step --->", global_learner_step.value, global_memory.size, global_memory.full.value)
+            print("learner ---> global_learner_step --->", global_learner_step.value)
 
 
 def continuous_evaluator(process_ind, args,

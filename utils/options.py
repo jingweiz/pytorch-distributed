@@ -104,12 +104,13 @@ class AgentParams(Params):
         elif 'continuous' in self.agent_type:
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
-            self.optim = SharedAdam
+            # self.optim = SharedAdam
+            self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 20   # max #iterations
             self.gamma               = 0.99
-            self.clip_grad           = 0.5#np.inf
+            self.clip_grad           = 100#np.inf
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
