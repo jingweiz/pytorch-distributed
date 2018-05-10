@@ -53,11 +53,6 @@ class Params(object):
         self.log_dir = self.root_dir + "/logs/" + self.refs + "/"
 
 
-class BoardParams(Params):
-    def __init__(self):
-        super(BoardParams, self).__init__()
-
-
 class EnvParams(Params):
     def __init__(self):
         super(EnvParams, self).__init__()

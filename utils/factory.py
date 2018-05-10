@@ -1,5 +1,7 @@
 from core.single_processes.discrete_single_processes import *
 from core.single_processes.continuous_single_processes import *
+LoggerDict = {"discrete":   None,
+              "continuous": continuous_logger}          # d3pg
 ActorDict = {"discrete":   None,
              "continuous": continuous_actor}            # d3pg
 LearnerDict = {"discrete":   None,

@@ -7,20 +7,36 @@ from utils.helpers import Experience, reset_experience
 from utils.helpers import update_target_model
 from utils.helpers import ensure_global_grads
 
-from utils.options import BoardParams
-board_params = BoardParams()
-board = SummaryWriter(board_params.log_dir)
+
+def continuous_logger(process_ind, args,
+                      loggers):
+    print("---------------------------->", process_ind, "logger")
+    # loggers
+    global_actor_step, global_learner_step = loggers
+
+    # set up board
+    board = SummaryWriter(args.log_dir)
+    board.add_text('config', str(args.num_actors) + 'actors(x ' +
+                             str(args.num_envs_per_actor) + 'envs) + ' +
+                             str(args.num_learners) + 'learners' + ' | ' +
+                             args.agent_type + ' | ' +
+                             args.env_type + ' | ' + args.game + ' | ' +
+                             args.memory_type + ' | ' +
+                             args.model_type)
+    while global_learner_step.value < args.agent_params.steps:
+        board.add_scalar("test/random", torch.randn(1), global_learner_step.value)
+        board.add_scalar("info/stats", global_actor_step.value, global_learner_step.value)
 
 
 def continuous_actor(process_ind, args,
-                     global_counters,
+                     loggers,
                      env_prototype,
                      model_prototype,
                      global_memory,
                      global_model):
     # loggers
     print("---------------------------->", process_ind, "actor")
-    global_actor_step, global_learner_step = global_counters
+    global_actor_step, global_learner_step = loggers
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
@@ -65,8 +81,6 @@ def continuous_actor(process_ind, args,
             last_state1 = experience.state1
             # flags
             flag_reset = False
-            # logging
-            board.add_scalar("actor/info", global_actor_step.value, global_learner_step.value)
 
         # run a single step
         action = local_model.get_action(experience.state1, random_process.sample())
@@ -97,22 +111,19 @@ def continuous_actor(process_ind, args,
             nepisodes += 1
             total_steps + episode_steps
             total_reward += episode_reward
-        # print("  actor --->   global_actor_step --->", global_actor_step.value, step, global_memory.size)
 
-        # report training stats
-
-        # evaluation & checkpointing
+        # report stats
 
 
 def continuous_learner(process_ind, args,
-                       global_counters,
+                       loggers,
                        model_prototype,
                        global_memory,
                        global_model,
                        global_optimizers):
     # loggers
     print("---------------------------->", process_ind, "learner")
-    global_actor_step, global_learner_step = global_counters
+    global_actor_step, global_learner_step = loggers
     # env
     # memory
     # model
@@ -134,11 +145,8 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
-    print("--------------", global_memory.size)
     while global_learner_step.value < args.agent_params.steps:
-        print("--------------------", global_memory.size, args.agent_params.learn_start)
         if global_memory.size >= args.agent_params.learn_start:
-            print("learner ---> global_learner_step --->", process_ind, global_learner_step.value)
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
             state0s, actions, rewards, state1s, terminal1s = experiences
@@ -178,21 +186,17 @@ def continuous_learner(process_ind, args,
                 global_learner_step.value += 1
             step += 1
 
-            # logging
-            board.add_scalar("learner/actor_loss", actor_loss, global_learner_step.value)
-            board.add_scalar("learner/critic_loss", critic_loss, global_learner_step.value)
-            print(actor_loss)
-            print(critic_loss)
+            # report stats
 
 
 def continuous_evaluator(process_ind, args,
-                         global_counters,
+                         loggers,
                          env_prototype,
                          model_prototype,
                          global_model):
     # loggers
     print("---------------------------->", process_ind, "evaluator")
-    global_actor_step, global_learner_step = global_counters
+    global_actor_step, global_learner_step = loggers
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
@@ -208,15 +212,59 @@ def continuous_evaluator(process_ind, args,
     local_model.eval()
     torch.set_grad_enabled(False)
 
-    # main control loop
-    # counters
-    step = 0
-    while step < args.agent_params.steps:
-        # update counters & stats
-        step += 1
-        board.add_scalar("evaluator/info", global_actor_step.value, global_learner_step.value)
+    if True:    # do a evaluation
+        # sync global model to local
+        local_model.load_state_dict(global_model.state_dict())
+
+        # main control loop
+        experience = reset_experience()
+        # counters
+        step = 0
+        episode_steps = 0
+        episode_reward = 0.
+        total_steps = 0
+        total_reward = 0.
+        nepisodes = 0
+        nepisodes_solved = 0
+        # flags
+        flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
+        while step < args.agent_params.eval_steps:
+            # deal w/ reset
+            if flag_reset:
+                # reset episode stats
+                episode_steps = 0
+                episode_reward = 0.
+                # reset game
+                experience = env.reset()
+                assert experience.state1 is not None
+                # flags
+                flag_reset = False
+
+            # run a single step
+            action = local_model.get_action(experience.state1)
+            experience = env.step(action)
+
+            # check conditions & update flags
+            if experience.terminal1:
+                nepisodes_solved += 1
+                flag_reset = True
+            if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
+                flag_reset = True
+
+            # update counters & stats
+            step += 1
+            episode_steps += 1
+            episode_reward += experience.reward
+            if flag_reset:
+                nepisodes += 1
+                total_steps + episode_steps
+                total_reward += episode_reward
+
+            # report stats
+
 
 def continuous_tester(process_ind, args,
+                      loggers,
                       env_prototype,
                       model_prototype,
                       global_model):
