@@ -306,7 +306,7 @@ def continuous_evaluator(process_ind, args,
                 episode_reward += experience.reward
                 if flag_reset:
                     nepisodes += 1
-                    total_steps + episode_steps
+                    total_steps += episode_steps
                     total_reward += episode_reward
 
             # report stats

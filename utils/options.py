@@ -71,9 +71,9 @@ class EnvParams(Params):
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
 
             # max #steps per episode
-            if self.game == "Pendulum-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
-                self.early_stop = 25#0
-            elif self.game == "Pong-ram-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
+            if self.game == "Pendulum-v0":  #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
+                self.early_stop = 200
+            elif self.game == "Pong-ram-v0":
                 self.early_stop = None
             else:
                 self.early_stop = None
@@ -84,7 +84,7 @@ class MemoryParams(Params):
         super(MemoryParams, self).__init__()
 
         if self.memory_type == "shared":
-            self.memory_size = 1000000
+            self.memory_size = 50000#1000000
 
 
 class ModelParams(Params):
@@ -142,15 +142,15 @@ class AgentParams(Params):
             self.lr_decay            = False
             self.weight_decay        = 0.
             # logger configs
-            self.logger_freq         = 10   # log every this many secs
-            self.actor_freq          = 250  # push & reset local actor stats every this many actor steps
-            self.learner_freq        = 250  # push & reset local learner stats every this many learner steps
-            self.evaluator_freq      = 10   # eval every this many secs
-            self.evaluator_steps     = 100  # eval for this many steps
+            self.logger_freq         = 15   # log every this many secs
+            self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
+            self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
+            self.evaluator_freq      = 60   # eval every this many secs
+            self.evaluator_steps     = 1000 # eval for this many steps
             self.test_nepisodes      = 50
             # off-policy specifics
-            self.learn_start         = 3000   # start update params after this many steps
-            self.batch_size          = 32
+            self.learn_start         = 200   # start update params after this many steps
+            self.batch_size          = 64
             self.target_model_update = 1e-3#1000
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
