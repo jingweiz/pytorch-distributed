@@ -32,7 +32,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 1
+        self.num_actors = 2 
         self.num_learners = 1           # TODO: can also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -142,6 +142,7 @@ class AgentParams(Params):
             self.lr_decay            = False
             self.weight_decay        = 0.
             # logger configs
+            self.logger_freq         = 10   # log every this many secs
             self.actor_freq          = 250  # push & reset local actor stats every this many actor steps
             self.learner_freq        = 250  # push & reset local learner stats every this many learner steps
             self.eval_freq           = 1000 # eval every this many secs

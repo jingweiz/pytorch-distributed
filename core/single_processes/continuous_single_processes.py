@@ -1,3 +1,4 @@
+import time
 import torch
 import torch.nn as nn
 import torch.multiprocessing as mp
@@ -9,34 +10,63 @@ from utils.helpers import ensure_global_grads
 
 
 def continuous_logger(process_ind, args,
-                      loggers):
+                      counter_loggers,
+                      actor_loggers,
+                      learner_loggers,
+                      evaluator_loggers):
     print("---------------------------->", process_ind, "logger")
     # loggers
-    global_actor_step, global_learner_step = loggers
+    global_actor_step, global_learner_step = counter_loggers
+    actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
+    learner_actor_loss, learner_critic_loss = learner_loggers
+    evaluator_total_steps, evaluator_total_reward, evaluator_nepisodes, evaluator_nepisodes_solved = evaluator_loggers
+    # additional stats
+    actor_total_nepisodes = 0
 
     # set up board
     board = SummaryWriter(args.log_dir)
-    board.add_text('config', str(args.num_actors) + 'actors(x ' +
-                             str(args.num_envs_per_actor) + 'envs) + ' +
-                             str(args.num_learners) + 'learners' + ' | ' +
-                             args.agent_type + ' | ' +
-                             args.env_type + ' | ' + args.game + ' | ' +
-                             args.memory_type + ' | ' +
-                             args.model_type)
+    # board.add_text('config', str(args.num_actors) + 'actors(x ' +
+    #                          str(args.num_envs_per_actor) + 'envs) + ' +
+    #                          str(args.num_learners) + 'learners' + ' | ' +
+    #                          args.agent_type + ' | ' +
+    #                          args.env_type + ' | ' + args.game + ' | ' +
+    #                          args.memory_type + ' | ' +
+    #                          args.model_type)
+
+    # start logging
+    last_log_time = time.time()
     while global_learner_step.value < args.agent_params.steps:
-        board.add_scalar("test/random", torch.randn(1), global_learner_step.value)
-        board.add_scalar("info/stats", global_actor_step.value, global_learner_step.value)
+        if time.time() - last_log_time > args.agent_params.logger_freq:
+            with actor_nepisodes.get_lock():
+                actor_total_nepisodes += actor_nepisodes.value
+                print("actor_total_steps      --->", actor_total_steps.value)
+                print("actor_total_reward     --->", actor_total_reward.value)
+                print("actor_nepisodes        --->", actor_nepisodes.value)
+                print("actor_nepisodes_solved --->", actor_nepisodes_solved.value)
+                board.add_scalar("actor/avg_steps", actor_total_steps.value/actor_nepisodes.value, global_learner_step.value)
+                board.add_scalar("actor/avg_reward", actor_total_reward.value/actor_nepisodes.value, global_learner_step.value)
+                board.add_scalar("actor/repisodes_solved", actor_nepisodes_solved.value/actor_nepisodes.value, global_learner_step.value)
+                board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_learner_step.value)
+                actor_total_steps.value = 0
+                actor_total_reward.value = 0.
+                actor_nepisodes.value = 0
+                actor_nepisodes_solved.value = 0
+            last_log_time = time.time()
 
 
 def continuous_actor(process_ind, args,
-                     loggers,
+                     counter_loggers,
+                     actor_loggers,
                      env_prototype,
                      model_prototype,
                      global_memory,
                      global_model):
     # loggers
     print("---------------------------->", process_ind, "actor")
-    global_actor_step, global_learner_step = loggers
+    global_actor_step, global_learner_step = counter_loggers
+    actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
+    print("actor init --->", actor_total_reward.value, actor_nepisodes.value, actor_nepisodes_solved.value)
+
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
@@ -109,14 +139,22 @@ def continuous_actor(process_ind, args,
         episode_reward += experience.reward
         if flag_reset:
             nepisodes += 1
-            total_steps + episode_steps
+            total_steps += episode_steps
             total_reward += episode_reward
 
         # report stats
         if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
-            print("actor --->", process_ind, step, total_steps, total_reward, nepisodes, nepisodes_solved)
+            # print("actor --->", process_ind, step, total_steps, total_reward, nepisodes, nepisodes_solved)
             # push local stats to logger
-            # TODO: ???
+            with actor_nepisodes.get_lock():
+                actor_total_steps.value += total_steps
+                actor_total_reward.value += total_reward
+                actor_nepisodes.value += nepisodes
+                actor_nepisodes_solved.value += nepisodes_solved
+                # print("actor ===> total_steps      ", actor_total_steps.value, total_steps)
+                # print("actor ===> total_reward     ", actor_total_reward.value, total_reward)
+                # print("actor ===> nepisodes        ", actor_nepisodes.value, nepisodes)
+                # print("actor ===> nepisodes_solved ", actor_nepisodes_solved.value, nepisodes_solved)
             # reset local stats
             total_steps = 0
             total_reward = 0.
@@ -125,14 +163,16 @@ def continuous_actor(process_ind, args,
 
 
 def continuous_learner(process_ind, args,
-                       loggers,
+                       counter_loggers,
+                       learner_loggers,
                        model_prototype,
                        global_memory,
                        global_model,
                        global_optimizers):
     # loggers
     print("---------------------------->", process_ind, "learner")
-    global_actor_step, global_learner_step = loggers
+    global_actor_step, global_learner_step = counter_loggers
+    learner_actor_loss, learner_critic_loss = learner_loggers
     # env
     # memory
     # model
@@ -199,13 +239,15 @@ def continuous_learner(process_ind, args,
 
 
 def continuous_evaluator(process_ind, args,
-                         loggers,
+                         counter_loggers,
+                         evaluator_loggers,
                          env_prototype,
                          model_prototype,
                          global_model):
     # loggers
     print("---------------------------->", process_ind, "evaluator")
-    global_actor_step, global_learner_step = loggers
+    global_actor_step, global_learner_step = counter_loggers
+    evaluator_total_steps, evaluator_total_reward, evaluator_nepisodes, evaluator_nepisodes_solved = evaluator_loggers
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
