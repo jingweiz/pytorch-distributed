@@ -190,6 +190,8 @@ def continuous_learner(process_ind, args,
     step = 0
     while global_loggers.learner_step.value < args.agent_params.steps:
         if global_memory.size > args.agent_params.learn_start:
+            # sync global model to local
+            local_model.load_state_dict(global_model.state_dict())
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
             state0s, actions, rewards, state1s, terminal1s = experiences
@@ -223,6 +225,9 @@ def continuous_learner(process_ind, args,
             ensure_global_grads(local_model, global_model, global_device)
             global_actor_optimizer.step()
             global_actor_optimizer.step()
+
+            # update target_model
+            update_target_model(local_model, local_target_model, args.agent_params.target_model_update)
 
             # update counters & stats
             with global_loggers.learner_step.get_lock():
