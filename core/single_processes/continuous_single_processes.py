@@ -10,52 +10,44 @@ from utils.helpers import ensure_global_grads
 
 
 def continuous_logger(process_ind, args,
-                      counter_loggers,
+                      global_loggers,
                       actor_loggers,
                       learner_loggers,
                       evaluator_loggers):
-    print("---------------------------->", process_ind, "logger")
     # loggers
-    global_actor_step, global_learner_step = counter_loggers
-    #actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
-    learner_actor_loss, learner_critic_loss = learner_loggers
-    evaluator_total_steps, evaluator_total_reward, evaluator_nepisodes, evaluator_nepisodes_solved = evaluator_loggers
-    # additional stats
+    print("---------------------------->", process_ind, "logger")
     actor_total_nepisodes = 0
 
     # set up board
     board = SummaryWriter(args.log_dir)
-    # board.add_text('config', str(args.num_actors) + 'actors(x ' +
-    #                          str(args.num_envs_per_actor) + 'envs) + ' +
-    #                          str(args.num_learners) + 'learners' + ' | ' +
-    #                          args.agent_type + ' | ' +
-    #                          args.env_type + ' | ' + args.game + ' | ' +
-    #                          args.memory_type + ' | ' +
-    #                          args.model_type)
 
     # start logging
     last_log_time = time.time()
-    while global_learner_step.value < args.agent_params.steps:
+    while global_loggers.learner_step.value < args.agent_params.steps:
         if time.time() - last_log_time > args.agent_params.logger_freq:
-            with actor_loggers.actor_nepisodes.get_lock():
-                actor_total_nepisodes += actor_loggers.actor_nepisodes.value
-                print("actor_total_steps      --->", actor_loggers.actor_total_steps.value)
-                print("actor_total_reward     --->", actor_loggers.actor_total_reward.value)
-                print("actor_nepisodes        --->", actor_loggers.actor_nepisodes.value)
-                print("actor_nepisodes_solved --->", actor_loggers.actor_nepisodes_solved.value)
-                #board.add_scalar("actor/avg_steps", actor_total_steps.value/actor_nepisodes.value, global_learner_step.value)
-                #board.add_scalar("actor/avg_reward", actor_total_reward.value/actor_nepisodes.value, global_learner_step.value)
-                #board.add_scalar("actor/repisodes_solved", actor_nepisodes_solved.value/actor_nepisodes.value, global_learner_step.value)
-                #board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_learner_step.value)
-                actor_loggers.actor_total_steps.value = 0
-                actor_loggers.actor_total_reward.value = 0
-                actor_loggers.actor_nepisodes.value = 0
-                actor_loggers.actor_nepisodes_solved.value = 0
+            with actor_loggers.nepisodes.get_lock():
+                if actor_loggers.nepisodes.value > 0:
+                    actor_total_nepisodes += actor_loggers.nepisodes.value
+                    board.add_scalar("actor/avg_steps", actor_loggers.total_steps.value/actor_loggers.nepisodes.value, global_loggers.learner_step.value)
+                    board.add_scalar("actor/avg_reward", actor_loggers.total_reward.value/actor_loggers.nepisodes.value, global_loggers.learner_step.value)
+                    board.add_scalar("actor/repisodes_solved", actor_loggers.nepisodes_solved.value/actor_loggers.nepisodes.value, global_loggers.learner_step.value)
+                    board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_loggers.learner_step.value)
+                    actor_loggers.total_steps.value = 0
+                    actor_loggers.total_reward.value = 0.
+                    actor_loggers.nepisodes.value = 0
+                    actor_loggers.nepisodes_solved.value = 0
+            with learner_loggers.loss_counter.get_lock():
+                if learner_loggers.loss_counter.value > 0:
+                    board.add_scalar("learner/actor_loss", learner_loggers.actor_loss.value/learner_loggers.loss_counter.value, global_loggers.learner_step.value)
+                    board.add_scalar("learner/critic_loss", learner_loggers.critic_loss.value/learner_loggers.loss_counter.value, global_loggers.learner_step.value)
+                    learner_loggers.actor_loss.value = 0.
+                    learner_loggers.critic_loss.value = 0.
+                    learner_loggers.loss_counter.value = 0
             last_log_time = time.time()
 
 
 def continuous_actor(process_ind, args,
-                     counter_loggers,
+                     global_loggers,
                      actor_loggers,
                      env_prototype,
                      model_prototype,
@@ -63,9 +55,6 @@ def continuous_actor(process_ind, args,
                      global_model):
     # loggers
     print("---------------------------->", process_ind, "actor")
-    global_actor_step, global_learner_step = counter_loggers
-    #actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
-    print("actor init --->", actor_loggers.actor_total_reward.value, actor_loggers.actor_nepisodes.value, actor_loggers.actor_nepisodes_solved.value)
 
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
@@ -97,7 +86,7 @@ def continuous_actor(process_ind, args,
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     last_state1 = None
-    while global_learner_step.value < args.agent_params.steps:
+    while global_loggers.learner_step.value < args.agent_params.steps:
         # deal w/ reset
         if flag_reset:
             # sync global model to local before every new episode # TODO: check when to update?
@@ -132,8 +121,8 @@ def continuous_actor(process_ind, args,
             flag_reset = True
 
         # update counters & stats
-        with global_actor_step.get_lock():
-            global_actor_step.value += 1
+        with global_loggers.actor_step.get_lock():
+            global_loggers.actor_step.value += 1
         step += 1
         episode_steps += 1
         episode_reward += experience.reward
@@ -144,17 +133,12 @@ def continuous_actor(process_ind, args,
 
         # report stats
         if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
-            # print("actor --->", process_ind, step, total_steps, total_reward, nepisodes, nepisodes_solved)
             # push local stats to logger
-            with actor_loggers.actor_nepisodes.get_lock():
-                actor_loggers.actor_total_steps.value += total_steps
-                actor_loggers.actor_total_reward.value += total_reward
-                actor_loggers.actor_nepisodes.value += nepisodes
-                actor_loggers.actor_nepisodes_solved.value += nepisodes_solved
-                # print("actor ===> total_steps      ", actor_total_steps.value, total_steps)
-                # print("actor ===> total_reward     ", actor_total_reward.value, total_reward)
-                # print("actor ===> nepisodes        ", actor_nepisodes.value, nepisodes)
-                # print("actor ===> nepisodes_solved ", actor_nepisodes_solved.value, nepisodes_solved)
+            with actor_loggers.nepisodes.get_lock():
+                actor_loggers.total_steps.value += total_steps
+                actor_loggers.total_reward.value += total_reward
+                actor_loggers.nepisodes.value += nepisodes
+                actor_loggers.nepisodes_solved.value += nepisodes_solved
             # reset local stats
             total_steps = 0
             total_reward = 0.
@@ -163,7 +147,7 @@ def continuous_actor(process_ind, args,
 
 
 def continuous_learner(process_ind, args,
-                       counter_loggers,
+                       global_loggers,
                        learner_loggers,
                        model_prototype,
                        global_memory,
@@ -171,8 +155,6 @@ def continuous_learner(process_ind, args,
                        global_optimizers):
     # loggers
     print("---------------------------->", process_ind, "learner")
-    global_actor_step, global_learner_step = counter_loggers
-    learner_actor_loss, learner_critic_loss = learner_loggers
     # env
     # memory
     # model
@@ -194,7 +176,7 @@ def continuous_learner(process_ind, args,
 
     # main control loop
     step = 0
-    while global_learner_step.value < args.agent_params.steps:
+    while global_loggers.learner_step.value < args.agent_params.steps:
         if global_memory.size >= args.agent_params.learn_start:
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
@@ -231,23 +213,25 @@ def continuous_learner(process_ind, args,
             global_actor_optimizer.step()
 
             # update counters & stats
-            with global_learner_step.get_lock():
-                global_learner_step.value += 1
+            with global_loggers.learner_step.get_lock():
+                global_loggers.learner_step.value += 1
             step += 1
 
             # report stats
+            if step % args.agent_params.learner_freq == 0: # then push local stats to logger & reset local
+                learner_loggers.actor_loss.value += actor_loss
+                learner_loggers.critic_loss.value += critic_loss
+                learner_loggers.loss_counter.value += 1
 
 
 def continuous_evaluator(process_ind, args,
-                         counter_loggers,
+                         global_loggers,
                          evaluator_loggers,
                          env_prototype,
                          model_prototype,
                          global_model):
     # loggers
     print("---------------------------->", process_ind, "evaluator")
-    global_actor_step, global_learner_step = counter_loggers
-    evaluator_total_steps, evaluator_total_reward, evaluator_nepisodes, evaluator_nepisodes_solved = evaluator_loggers
     # env
     env = env_prototype(args.env_params, process_ind)
     # memory
