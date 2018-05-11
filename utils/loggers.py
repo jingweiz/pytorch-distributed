@@ -24,3 +24,4 @@ class EvaluatorLoggers(object):
         self.total_reward = mp.Value('d', 0.)
         self.nepisodes = mp.Value('l', 0)
         self.nepisodes_solved = mp.Value('l', 0)
+        self.logger_lock = mp.Value('b', False)

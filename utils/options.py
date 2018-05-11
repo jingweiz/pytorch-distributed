@@ -145,8 +145,8 @@ class AgentParams(Params):
             self.logger_freq         = 10   # log every this many secs
             self.actor_freq          = 250  # push & reset local actor stats every this many actor steps
             self.learner_freq        = 250  # push & reset local learner stats every this many learner steps
-            self.eval_freq           = 1000 # eval every this many secs
-            self.eval_steps          = 1000 # eval for this many steps
+            self.evaluator_freq      = 10   # eval every this many secs
+            self.evaluator_steps     = 100  # eval for this many steps
             self.test_nepisodes      = 50
             # off-policy specifics
             self.learn_start         = 3000   # start update params after this many steps

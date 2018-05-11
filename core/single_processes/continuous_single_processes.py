@@ -24,13 +24,24 @@ def continuous_logger(process_ind, args,
     # start logging
     last_log_time = time.time()
     while global_loggers.learner_step.value < args.agent_params.steps:
+        if evaluator_loggers.logger_lock.value:
+            current_learner_step = global_loggers.learner_step.value
+            with evaluator_loggers.logger_lock.get_lock():
+                if evaluator_loggers.nepisodes.value > 0:
+                    current_learner_step = global_loggers.learner_step.value
+                    board.add_scalar("evaluator/avg_steps", evaluator_loggers.total_steps.value/evaluator_loggers.nepisodes.value, current_learner_step)
+                    board.add_scalar("evaluator/avg_reward", evaluator_loggers.total_reward.value/evaluator_loggers.nepisodes.value, current_learner_step)
+                    board.add_scalar("evaluator/repisodes_solved", evaluator_loggers.nepisodes_solved.value/evaluator_loggers.nepisodes.value, current_learner_step)
+                    board.add_scalar("evaluator/nepisodes", evaluator_loggers.nepisodes.value, current_learner_step)
+                evaluator_loggers.logger_lock.value = False
         if time.time() - last_log_time > args.agent_params.logger_freq:
             with actor_loggers.nepisodes.get_lock():
                 if actor_loggers.nepisodes.value > 0:
+                    current_learner_step = global_loggers.learner_step.value
                     actor_total_nepisodes += actor_loggers.nepisodes.value
-                    board.add_scalar("actor/avg_steps", actor_loggers.total_steps.value/actor_loggers.nepisodes.value, global_loggers.learner_step.value)
-                    board.add_scalar("actor/avg_reward", actor_loggers.total_reward.value/actor_loggers.nepisodes.value, global_loggers.learner_step.value)
-                    board.add_scalar("actor/repisodes_solved", actor_loggers.nepisodes_solved.value/actor_loggers.nepisodes.value, global_loggers.learner_step.value)
+                    board.add_scalar("actor/avg_steps", actor_loggers.total_steps.value/actor_loggers.nepisodes.value, current_learner_step)
+                    board.add_scalar("actor/avg_reward", actor_loggers.total_reward.value/actor_loggers.nepisodes.value, current_learner_step)
+                    board.add_scalar("actor/repisodes_solved", actor_loggers.nepisodes_solved.value/actor_loggers.nepisodes.value, current_learner_step)
                     board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_loggers.learner_step.value)
                     actor_loggers.total_steps.value = 0
                     actor_loggers.total_reward.value = 0.
@@ -38,8 +49,9 @@ def continuous_logger(process_ind, args,
                     actor_loggers.nepisodes_solved.value = 0
             with learner_loggers.loss_counter.get_lock():
                 if learner_loggers.loss_counter.value > 0:
-                    board.add_scalar("learner/actor_loss", learner_loggers.actor_loss.value/learner_loggers.loss_counter.value, global_loggers.learner_step.value)
-                    board.add_scalar("learner/critic_loss", learner_loggers.critic_loss.value/learner_loggers.loss_counter.value, global_loggers.learner_step.value)
+                    current_learner_step = global_loggers.learner_step.value
+                    board.add_scalar("learner/actor_loss", learner_loggers.actor_loss.value/learner_loggers.loss_counter.value, current_learner_step)
+                    board.add_scalar("learner/critic_loss", learner_loggers.critic_loss.value/learner_loggers.loss_counter.value, current_learner_step)
                     learner_loggers.actor_loss.value = 0.
                     learner_loggers.critic_loss.value = 0.
                     learner_loggers.loss_counter.value = 0
@@ -177,7 +189,7 @@ def continuous_learner(process_ind, args,
     # main control loop
     step = 0
     while global_loggers.learner_step.value < args.agent_params.steps:
-        if global_memory.size >= args.agent_params.learn_start:
+        if global_memory.size > args.agent_params.learn_start:
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
             state0s, actions, rewards, state1s, terminal1s = experiences
@@ -247,55 +259,66 @@ def continuous_evaluator(process_ind, args,
     local_model.eval()
     torch.set_grad_enabled(False)
 
-    if True:    # do a evaluation
-        # sync global model to local
-        local_model.load_state_dict(global_model.state_dict())
+    last_eval_time = time.time()
+    while global_loggers.learner_step.value < args.agent_params.steps:
+        if time.time() - last_eval_time > args.agent_params.evaluator_freq:
+            # sync global model to local
+            local_model.load_state_dict(global_model.state_dict())
 
-        # main control loop
-        experience = reset_experience()
-        # counters
-        step = 0
-        episode_steps = 0
-        episode_reward = 0.
-        total_steps = 0
-        total_reward = 0.
-        nepisodes = 0
-        nepisodes_solved = 0
-        # flags
-        flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
-        while step < args.agent_params.eval_steps:
-            # deal w/ reset
-            if flag_reset:
-                # reset episode stats
-                episode_steps = 0
-                episode_reward = 0.
-                # reset game
-                experience = env.reset()
-                assert experience.state1 is not None
-                # flags
-                flag_reset = False
+            # main control loop
+            experience = reset_experience()
+            # counters
+            step = 0
+            episode_steps = 0
+            episode_reward = 0.
+            total_steps = 0
+            total_reward = 0.
+            nepisodes = 0
+            nepisodes_solved = 0
+            # flags
+            flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
+            while step < args.agent_params.evaluator_steps:
+                # deal w/ reset
+                if flag_reset:
+                    # reset episode stats
+                    episode_steps = 0
+                    episode_reward = 0.
+                    # reset game
+                    experience = env.reset()
+                    assert experience.state1 is not None
+                    # flags
+                    flag_reset = False
 
-            # run a single step
-            action = local_model.get_action(experience.state1)
-            experience = env.step(action)
+                # run a single step
+                action = local_model.get_action(experience.state1)
+                experience = env.step(action)
 
-            # check conditions & update flags
-            if experience.terminal1:
-                nepisodes_solved += 1
-                flag_reset = True
-            if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
-                flag_reset = True
+                # check conditions & update flags
+                if experience.terminal1:
+                    nepisodes_solved += 1
+                    flag_reset = True
+                if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
+                    flag_reset = True
 
-            # update counters & stats
-            step += 1
-            episode_steps += 1
-            episode_reward += experience.reward
-            if flag_reset:
-                nepisodes += 1
-                total_steps + episode_steps
-                total_reward += episode_reward
+                # update counters & stats
+                step += 1
+                episode_steps += 1
+                episode_reward += experience.reward
+                if flag_reset:
+                    nepisodes += 1
+                    total_steps + episode_steps
+                    total_reward += episode_reward
 
             # report stats
+            # push local stats to logger
+            with evaluator_loggers.logger_lock.get_lock():
+                evaluator_loggers.total_steps.value = total_steps
+                evaluator_loggers.total_reward.value = total_reward
+                evaluator_loggers.nepisodes.value = nepisodes
+                evaluator_loggers.nepisodes_solved.value = nepisodes_solved
+                evaluator_loggers.logger_lock.value = True
+
+            last_eval_time = time.time()
 
 
 def continuous_tester(process_ind, args,
