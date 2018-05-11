@@ -17,7 +17,7 @@ def continuous_logger(process_ind, args,
     print("---------------------------->", process_ind, "logger")
     # loggers
     global_actor_step, global_learner_step = counter_loggers
-    actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
+    #actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
     learner_actor_loss, learner_critic_loss = learner_loggers
     evaluator_total_steps, evaluator_total_reward, evaluator_nepisodes, evaluator_nepisodes_solved = evaluator_loggers
     # additional stats
@@ -37,20 +37,20 @@ def continuous_logger(process_ind, args,
     last_log_time = time.time()
     while global_learner_step.value < args.agent_params.steps:
         if time.time() - last_log_time > args.agent_params.logger_freq:
-            with actor_nepisodes.get_lock():
-                actor_total_nepisodes += actor_nepisodes.value
-                print("actor_total_steps      --->", actor_total_steps.value)
-                print("actor_total_reward     --->", actor_total_reward.value)
-                print("actor_nepisodes        --->", actor_nepisodes.value)
-                print("actor_nepisodes_solved --->", actor_nepisodes_solved.value)
-                board.add_scalar("actor/avg_steps", actor_total_steps.value/actor_nepisodes.value, global_learner_step.value)
-                board.add_scalar("actor/avg_reward", actor_total_reward.value/actor_nepisodes.value, global_learner_step.value)
-                board.add_scalar("actor/repisodes_solved", actor_nepisodes_solved.value/actor_nepisodes.value, global_learner_step.value)
-                board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_learner_step.value)
-                actor_total_steps.value = 0
-                actor_total_reward.value = 0.
-                actor_nepisodes.value = 0
-                actor_nepisodes_solved.value = 0
+            with actor_loggers.actor_nepisodes.get_lock():
+                actor_total_nepisodes += actor_loggers.actor_nepisodes.value
+                print("actor_total_steps      --->", actor_loggers.actor_total_steps.value)
+                print("actor_total_reward     --->", actor_loggers.actor_total_reward.value)
+                print("actor_nepisodes        --->", actor_loggers.actor_nepisodes.value)
+                print("actor_nepisodes_solved --->", actor_loggers.actor_nepisodes_solved.value)
+                #board.add_scalar("actor/avg_steps", actor_total_steps.value/actor_nepisodes.value, global_learner_step.value)
+                #board.add_scalar("actor/avg_reward", actor_total_reward.value/actor_nepisodes.value, global_learner_step.value)
+                #board.add_scalar("actor/repisodes_solved", actor_nepisodes_solved.value/actor_nepisodes.value, global_learner_step.value)
+                #board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_learner_step.value)
+                actor_loggers.actor_total_steps.value = 0
+                actor_loggers.actor_total_reward.value = 0
+                actor_loggers.actor_nepisodes.value = 0
+                actor_loggers.actor_nepisodes_solved.value = 0
             last_log_time = time.time()
 
 
@@ -64,8 +64,8 @@ def continuous_actor(process_ind, args,
     # loggers
     print("---------------------------->", process_ind, "actor")
     global_actor_step, global_learner_step = counter_loggers
-    actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
-    print("actor init --->", actor_total_reward.value, actor_nepisodes.value, actor_nepisodes_solved.value)
+    #actor_total_steps, actor_total_reward, actor_nepisodes, actor_nepisodes_solved = actor_loggers
+    print("actor init --->", actor_loggers.actor_total_reward.value, actor_loggers.actor_nepisodes.value, actor_loggers.actor_nepisodes_solved.value)
 
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
@@ -146,11 +146,11 @@ def continuous_actor(process_ind, args,
         if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
             # print("actor --->", process_ind, step, total_steps, total_reward, nepisodes, nepisodes_solved)
             # push local stats to logger
-            with actor_nepisodes.get_lock():
-                actor_total_steps.value += total_steps
-                actor_total_reward.value += total_reward
-                actor_nepisodes.value += nepisodes
-                actor_nepisodes_solved.value += nepisodes_solved
+            with actor_loggers.actor_nepisodes.get_lock():
+                actor_loggers.actor_total_steps.value += total_steps
+                actor_loggers.actor_total_reward.value += total_reward
+                actor_loggers.actor_nepisodes.value += nepisodes
+                actor_loggers.actor_nepisodes_solved.value += nepisodes_solved
                 # print("actor ===> total_steps      ", actor_total_steps.value, total_steps)
                 # print("actor ===> total_reward     ", actor_total_reward.value, total_reward)
                 # print("actor ===> nepisodes        ", actor_nepisodes.value, nepisodes)

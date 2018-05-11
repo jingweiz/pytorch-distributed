@@ -8,6 +8,12 @@ from utils.options import Options
 from utils.factory import LoggerDict, ActorDict, LearnerDict, EvaluatorDict, TesterDict
 from utils.factory import EnvDict, MemoryDict, ModelDict
 
+class ActorLoggers():
+    def __init__(self):
+        self.actor_total_steps = mp.Value('l', 0)            # periodically reset
+        self.actor_total_reward = mp.Value('d', 0.)          # periodically reset
+        self.actor_nepisodes = mp.Value('l', 0)              # periodically reset
+        self.actor_nepisodes_solved = mp.Value('l', 0)       # periodically reset
 
 if __name__ == '__main__':
     mp.set_start_method("spawn")
@@ -46,10 +52,10 @@ if __name__ == '__main__':
     global_actor_step = mp.Value('l', 0)            # global frame step counter
     global_learner_step = mp.Value('l', 0)          # global train step counter
     # actor stats
-    actor_total_steps = mp.Value('l', 0)            # periodically reset
-    actor_total_reward = mp.Value('d', 0.)          # periodically reset
-    actor_nepisodes = mp.Value('l', 0)              # periodically reset
-    actor_nepisodes_solved = mp.Value('l', 0)       # periodically reset
+    #actor_total_steps = mp.Value('l', 0)            # periodically reset
+    #actor_total_reward = mp.Value('d', 0.)          # periodically reset
+    #actor_nepisodes = mp.Value('l', 0)              # periodically reset
+    #actor_nepisodes_solved = mp.Value('l', 0)       # periodically reset
     # learner stats
     learner_actor_loss = mp.Value('d', 0.)          # periodically reset
     learner_critic_loss = mp.Value('d', 0.)         # periodically reset
@@ -61,10 +67,11 @@ if __name__ == '__main__':
     # group up
     counter_loggers = {global_actor_step,
                        global_learner_step}
-    actor_loggers = {actor_total_steps,
-                     actor_total_reward,
-                     actor_nepisodes,
-                     actor_nepisodes_solved}
+    #actor_loggers = {actor_total_steps,
+                    #actor_total_reward,
+                    #actor_nepisodes,
+                    #actor_nepisodes_solved}
+    actor_loggers=ActorLoggers()
     learner_loggers = {learner_actor_loss,
                        learner_critic_loss}
     evaluator_loggers = {evaluator_total_steps,
