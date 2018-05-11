@@ -113,6 +113,15 @@ def continuous_actor(process_ind, args,
             total_reward += episode_reward
 
         # report stats
+        if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
+            print("actor --->", process_ind, step, total_steps, total_reward, nepisodes, nepisodes_solved)
+            # push local stats to logger
+            # TODO: ???
+            # reset local stats
+            total_steps = 0
+            total_reward = 0.
+            nepisodes = 0
+            nepisodes_solved = 0
 
 
 def continuous_learner(process_ind, args,

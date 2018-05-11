@@ -19,7 +19,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051000"    # "yymmdd##"
+        self.timestamp  = "18051100"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 1
@@ -32,7 +32,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 2
+        self.num_actors = 1
         self.num_learners = 1           # TODO: can also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -72,7 +72,7 @@ class EnvParams(Params):
 
             # max #steps per episode
             if self.game == "Pendulum-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
-                self.early_stop = 250
+                self.early_stop = 25#0
             elif self.game == "Pong-ram-v0": #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
                 self.early_stop = None
             else:
@@ -141,9 +141,11 @@ class AgentParams(Params):
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
-            self.eval_freq           = 1000#00  # NOTE: here means every this many steps
-            self.eval_steps          = 1000
-            self.prog_freq           = self.eval_freq
+            # logger configs
+            self.actor_freq          = 250  # push & reset local actor stats every this many actor steps
+            self.learner_freq        = 250  # push & reset local learner stats every this many learner steps
+            self.eval_freq           = 1000 # eval every this many secs
+            self.eval_steps          = 1000 # eval for this many steps
             self.test_nepisodes      = 50
             # off-policy specifics
             self.learn_start         = 3000   # start update params after this many steps
