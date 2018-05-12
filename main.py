@@ -38,8 +38,8 @@ if __name__ == '__main__':
     # optimizer
     global_actor_optimizer = opt.agent_params.optim(global_model.actor.parameters())
     global_critic_optimizer = opt.agent_params.optim(global_model.critic.parameters())
-    global_optimizers = {global_actor_optimizer,
-                         global_critic_optimizer}
+    global_optimizers = [global_actor_optimizer,
+                         global_critic_optimizer]
     # loggers
     global_loggers = GlobalLoggers()
     actor_loggers = ActorLoggers()

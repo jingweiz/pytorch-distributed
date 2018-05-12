@@ -222,9 +222,9 @@ def continuous_learner(process_ind, args,
             nn.utils.clip_grad_value_(local_model.critic.parameters(), args.agent_params.clip_grad)
 
             # learn on this batch - sync local grads to global
-            ensure_global_grads(local_model, global_model, global_device)
+            ensure_global_grads(local_model, global_model, local_device, global_device)
             global_actor_optimizer.step()
-            global_actor_optimizer.step()
+            global_critic_optimizer.step()
 
             # update target_model
             update_target_model(local_model, local_target_model, args.agent_params.target_model_update)

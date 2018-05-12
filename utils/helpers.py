@@ -1,4 +1,6 @@
 from collections import namedtuple
+import torch
+
 # This is to be understood as a transition: Given `state0`, performing `action`
 # yields `reward` and results in `state1`, which might be `terminal`.
 # NOTE: used as the return format for Env(), and as the format to push into replay memory for off-policy methods (DQN)
@@ -23,9 +25,10 @@ def update_target_model(model, target_model, target_model_update=1.):
                                     param.data * target_model_update)
 
 
-def ensure_global_grads(local_model, global_model, global_device):
+def ensure_global_grads(local_model, global_model, local_device, global_device=torch.device('cpu')):
     for local_param, global_param in zip(local_model.parameters(),
                                          global_model.parameters()):
-        if global_param.grad is not None:
+        if global_param.grad is not None and local_device == global_device:
             return
-        global_param._grad = local_param.grad.to(global_device)
+        else:
+            global_param._grad = local_param.grad.to(global_device)

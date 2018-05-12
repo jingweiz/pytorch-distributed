@@ -19,7 +19,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051100"    # "yymmdd##"
+        self.timestamp  = "18051200"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 1
@@ -32,7 +32,7 @@ class Params(object):
         self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 2
+        self.num_actors = 8
         self.num_learners = 1           # TODO: can also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -138,6 +138,7 @@ class AgentParams(Params):
             self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = 100#np.inf
+            # self.clip_grad           = 0.5#np.inf
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
