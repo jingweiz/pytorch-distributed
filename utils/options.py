@@ -19,7 +19,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051200"    # "yymmdd##"
+        self.timestamp  = "18051202"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 1

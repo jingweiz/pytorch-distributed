@@ -5,9 +5,9 @@ import torch.nn as nn
 import torch.multiprocessing as mp
 
 from utils.options import Options
-from utils.loggers import GlobalLoggers, ActorLoggers, LearnerLoggers, EvaluatorLoggers
-from utils.factory import LoggerDict, ActorDict, LearnerDict, EvaluatorDict, TesterDict
-from utils.factory import EnvDict, MemoryDict, ModelDict
+from utils.logs import GlobalLogs, ActorLogs, LearnerLogs, EvaluatorLogs
+from utils.factory import LoggersDict, ActorsDict, LearnersDict, EvaluatorsDict, TestersDict
+from utils.factory import EnvsDict, MemoriesDict, ModelsDict
 
 if __name__ == '__main__':
     mp.set_start_method("spawn")
@@ -15,9 +15,9 @@ if __name__ == '__main__':
     opt = Options()
     torch.manual_seed(opt.seed)
 
-    env_prototype = EnvDict[opt.env_type]
-    memory_prototype = MemoryDict[opt.memory_type]
-    model_prototype = ModelDict[opt.model_type]
+    env_prototype = EnvsDict[opt.env_type]
+    memory_prototype = MemoriesDict[opt.memory_type]
+    model_prototype = ModelsDict[opt.model_type]
 
     # dummy env to get state/action/reward_shape
     dummy_env = env_prototype(opt.env_params, 0)
@@ -40,32 +40,32 @@ if __name__ == '__main__':
     global_critic_optimizer = opt.agent_params.optim(global_model.critic.parameters())
     global_optimizers = [global_actor_optimizer,
                          global_critic_optimizer]
-    # loggers
-    global_loggers = GlobalLoggers()
-    actor_loggers = ActorLoggers()
-    learner_loggers = LearnerLoggers()
-    evaluator_loggers = EvaluatorLoggers()
+    # logs
+    global_logs = GlobalLogs()
+    actor_logs = ActorLogs()
+    learner_logs = LearnerLogs()
+    evaluator_logs = EvaluatorLogs()
 
     processes = []
     if opt.mode == 1:
         # logger
-        logger_fn = LoggerDict[opt.agent_type]
+        logger_fn = LoggersDict[opt.agent_type]
         p = mp.Process(target=logger_fn,
                        args=(0, opt,
-                             global_loggers,
-                             actor_loggers,
-                             learner_loggers,
-                             evaluator_loggers
+                             global_logs,
+                             actor_logs,
+                             learner_logs,
+                             evaluator_logs
                             ))
         p.start()
         processes.append(p)
         # actor
-        actor_fn = ActorDict[opt.agent_type]
+        actor_fn = ActorsDict[opt.agent_type]
         for process_ind in range(opt.num_actors):
             p = mp.Process(target=actor_fn,
                            args=(process_ind+1, opt,
-                                 global_loggers,
-                                 actor_loggers,
+                                 global_logs,
+                                 actor_logs,
                                  env_prototype,
                                  model_prototype,
                                  global_memory,
@@ -74,12 +74,12 @@ if __name__ == '__main__':
             p.start()
             processes.append(p)
         # learner
-        learner_fn = LearnerDict[opt.agent_type]
+        learner_fn = LearnersDict[opt.agent_type]
         for process_ind in range(opt.num_learners):
             p = mp.Process(target=learner_fn,
                            args=(opt.num_actors+process_ind+1, opt,
-                                 global_loggers,
-                                 learner_loggers,
+                                 global_logs,
+                                 learner_logs,
                                  model_prototype,
                                  global_memory,
                                  global_model,
@@ -88,11 +88,11 @@ if __name__ == '__main__':
             p.start()
             processes.append(p)
         # evaluator
-        evaluator_fn = EvaluatorDict[opt.agent_type]
+        evaluator_fn = EvaluatorsDict[opt.agent_type]
         p = mp.Process(target=evaluator_fn,
                        args=(opt.num_actors+opt.num_learners+1, opt,
-                             global_loggers,
-                             evaluator_loggers,
+                             global_logs,
+                             evaluator_logs,
                              env_prototype,
                              model_prototype,
                              global_model
@@ -101,10 +101,10 @@ if __name__ == '__main__':
         processes.append(p)
     elif opt.mode == 2:
         # tester
-        tester_fn = TesterDict[opt.agent_type]
+        tester_fn = TestersDict[opt.agent_type]
         p = mp.Process(target=evaluator_fn,
                        args=(opt.num_actors+opt.num_learners+2, opt,
-                             global_loggers,
+                             global_logs,
                              env_prototype,
                              model_prototype,
                              global_model))
