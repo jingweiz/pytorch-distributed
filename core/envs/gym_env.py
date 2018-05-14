@@ -16,6 +16,7 @@ from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from utils.helpers import Experience            # NOTE: here state0 is always "None"
 from core.env import Env
 from core.envs.make_env import make_env
+from gym.spaces.discrete import Discrete
 
 
 class GymEnv(Env):
@@ -38,8 +39,15 @@ class GymEnv(Env):
             #self.env = DummyVecEnv(envs) NOTE double check
             self.env = envs[0]()
 
-        self.action_low = self.env.action_space.low
-        self.action_high = self.env.action_space.high
+        if isinstance(self.env.action_space, Discrete):
+            self.discrete="True"
+            pass
+            #self.action_low = self.env.action_space.low
+            #self.action_high = self.env.action_space.high
+        else:
+            self.discrete="False"
+            self.action_low = self.env.action_space.low
+            self.action_high = self.env.action_space.high
 
     def _preprocess_state(self, state):
         return state.reshape(self.state_shape) # TODO
@@ -57,13 +65,20 @@ class GymEnv(Env):
 
     @property
     def action_shape(self):
-        return self.env.action_space.shape[0]
+        if self.discrete == False:
+            return self.env.action_space.shape[0]
+        else:
+            return self.env.action_space.n
+
 
     def step(self, action):
         self.exp_action = self._preprocess_action(action)
-        execute_action = np.clip(action*self.action_high,
-                self.action_low,
-                self.action_high)
+        if self.discrete=="False":
+            execute_action = np.clip(action*self.action_high,
+                    self.action_low,
+                    self.action_high)
+        else:
+            execute_action = action
         self.exp_state1, self.exp_reward, self.exp_terminal1, _ = self.env.step(execute_action)
         return self._get_experience()
 
