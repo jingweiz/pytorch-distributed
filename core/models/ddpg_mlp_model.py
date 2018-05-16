@@ -6,9 +6,9 @@ import torch.nn.functional as F
 from core.model import Model
 
 
-class ContinuousMlpModel(Model):
+class DDPGMlpModel(Model):
     def __init__(self, args, input_dims, output_dims):
-        super(ContinuousMlpModel, self).__init__(args, input_dims, output_dims)
+        super(DDPGMlpModel, self).__init__(args, input_dims, output_dims)
 
         # model_params for this model
 

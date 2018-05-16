@@ -40,12 +40,9 @@ class GymEnv(Env):
             self.env = envs[0]()
 
         if isinstance(self.env.action_space, Discrete):
-            self.discrete="True"
-            pass
-            #self.action_low = self.env.action_space.low
-            #self.action_high = self.env.action_space.high
+            self.discrete = True
         else:
-            self.discrete="False"
+            self.discrete = False
             self.action_low = self.env.action_space.low
             self.action_high = self.env.action_space.high
 
@@ -57,7 +54,7 @@ class GymEnv(Env):
 
     @property
     def state_shape(self):  # NOTE: here returns the shape after preprocessing, i.e., the shape that gets passed out that's pushed into memory
-        if len(self.env.observation_space.shape)<2:
+        if len(self.env.observation_space.shape) < 2:
             return [self.state_cha, self.state_hei, self.env.observation_space.shape[0]]
         else:
             # return self.env.observation_space.shape
@@ -65,20 +62,19 @@ class GymEnv(Env):
 
     @property
     def action_shape(self):
-        if self.discrete == False:
-            return self.env.action_space.shape[0]
-        else:
+        if self.discrete:
             return self.env.action_space.n
-
+        else:
+            return self.env.action_space.shape[0]
 
     def step(self, action):
         self.exp_action = self._preprocess_action(action)
-        if self.discrete=="False":
+        if self.discrete:
+            execute_action = action
+        else:
             execute_action = np.clip(action*self.action_high,
                     self.action_low,
                     self.action_high)
-        else:
-            execute_action = action
         self.exp_state1, self.exp_reward, self.exp_terminal1, _ = self.env.step(execute_action)
         return self._get_experience()
 

@@ -1,9 +1,22 @@
-from core.single_processes.loggers import ddpg_logger
+from core.single_processes.logs import GlobalLogs
+from core.single_processes.logs import ActorLogs
+from core.single_processes.logs import DQNLearnerLogs, DDPGLearnerLogs
+from core.single_processes.logs import EvaluatorLogs
+GlobalLogsDict = {"discrete":   GlobalLogs,
+                  "continuous": GlobalLogs}
+ActorLogsDict = {"discrete":   ActorLogs,
+                 "continuous": ActorLogs}
+LearnerLogsDict = {"discrete":   DQNLearnerLogs,
+                   "continuous": DDPGLearnerLogs}
+EvaluatorLogsDict = {"discrete":   EvaluatorLogs,
+                     "continuous": EvaluatorLogs}
+
+from core.single_processes.loggers import dqn_logger, ddpg_logger
 from core.single_processes.actors import ddpg_actor
 from core.single_processes.learners import ddpg_learner
 from core.single_processes.evaluators import evaluator
 from core.single_processes.testers import tester
-LoggersDict = {"discrete":   None,
+LoggersDict = {"discrete":   dqn_logger,
                "continuous": ddpg_logger}
 ActorsDict = {"discrete":   None,
               "continuous": ddpg_actor}
@@ -21,7 +34,7 @@ from core.memories.shared_memory import SharedMemory
 MemoriesDict = {"shared": SharedMemory,
                 "none":   None}
 
-from core.models.discrete_mlp_model import DiscreteMlpModel
-from core.models.continuous_mlp_model import ContinuousMlpModel
-ModelsDict = {"discrete-mlp":   DiscreteMlpModel,
-              "continuous-mlp": ContinuousMlpModel}
+from core.models.dqn_mlp_model import DQNMlpModel
+from core.models.ddpg_mlp_model import DDPGMlpModel
+ModelsDict = {"dqn-mlp":  DQNMlpModel,
+              "ddpg-mlp": DDPGMlpModel}

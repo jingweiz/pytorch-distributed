@@ -12,7 +12,12 @@ class ActorLogs(object):
         self.nepisodes = mp.Value('l', 0)
         self.nepisodes_solved = mp.Value('l', 0)
 
-class LearnerLogs(object):
+class DQNLearnerLogs(object):
+    def __init__(self):
+        self.critic_loss = mp.Value('d', 0.)
+        self.loss_counter = mp.Value('l', 0)
+
+class DDPGLearnerLogs(object):
     def __init__(self):
         self.actor_loss = mp.Value('d', 0.)
         self.critic_loss = mp.Value('d', 0.)

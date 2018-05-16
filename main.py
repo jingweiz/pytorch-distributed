@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.multiprocessing as mp
 
 from utils.options import Options
-from utils.logs import GlobalLogs, ActorLogs, LearnerLogs, EvaluatorLogs
+from utils.factory import GlobalLogsDict, ActorLogsDict, LearnerLogsDict, EvaluatorLogsDict
 from utils.factory import LoggersDict, ActorsDict, LearnersDict, EvaluatorsDict, TestersDict
 from utils.factory import EnvsDict, MemoriesDict, ModelsDict
 
@@ -41,10 +41,10 @@ if __name__ == '__main__':
     global_optimizers = [global_actor_optimizer,
                          global_critic_optimizer]
     # logs
-    global_logs = GlobalLogs()
-    actor_logs = ActorLogs()
-    learner_logs = LearnerLogs()
-    evaluator_logs = EvaluatorLogs()
+    global_logs = GlobalLogsDict[opt.agent_type]()
+    actor_logs = ActorLogsDict[opt.agent_type]()
+    learner_logs = LearnerLogsDict[opt.agent_type]()
+    evaluator_logs = EvaluatorLogsDict[opt.agent_type]()
 
     processes = []
     if opt.mode == 1:

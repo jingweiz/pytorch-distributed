@@ -10,19 +10,19 @@ from optims.sharedAdam import SharedAdam
 from optims.sharedRMSprop import SharedRMSprop
 
 CONFIGS = [
-# agent_type,   env_type, game,          memory_type, model_type
-[ "discrete",   "gym",    "Pong-ram-v0", "shared",    "discrete-mlp"  ], # 0 *
-[ "continuous", "gym",    "Pendulum-v0", "shared",    "continuous-mlp"], # 1 *
+# agent_type, env_type, game,          memory_type, model_type
+[ "dqn",      "gym",    "Pong-ram-v0", "shared",    "discrete-mlp"  ], # 0 *
+[ "ddpg",     "gym",    "Pendulum-v0", "shared",    "continuous-mlp"], # 1 *
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051202"    # "yymmdd##"
+        self.timestamp  = "18051500"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 1
+        self.config     = 0
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
