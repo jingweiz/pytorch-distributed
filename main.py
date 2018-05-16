@@ -19,35 +19,35 @@ if __name__ == '__main__':
     memory_prototype = MemoriesDict[opt.memory_type]
     model_prototype = ModelsDict[opt.model_type]
 
-    # dummy env to get state/action/reward_shape
+    # dummy env to get state/action/reward/terminal_space & action_shape
     dummy_env = env_prototype(opt.env_params, 0)
     opt.state_shape = dummy_env.state_shape
     opt.action_shape = dummy_env.action_shape
+    opt.action_space = dummy_env.action_space
     opt.reward_shape = opt.agent_params.num_tasks
     opt.terminal_shape = opt.agent_params.num_tasks
     del dummy_env
-    # shared memory
-    opt.memory_params.state_shape = opt.state_shape
-    opt.memory_params.action_shape = opt.action_shape
-    opt.memory_params.reward_shape = opt.reward_shape
-    opt.memory_params.terminal_shape = opt.terminal_shape
-    global_memory = memory_prototype(opt.memory_params)
-    # shared model
-    global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_shape)
-    global_model.share_memory() # gradients are allocated lazily, so they are not shared here
-    # optimizer
-    global_actor_optimizer = opt.agent_params.optim(global_model.actor.parameters())
-    global_critic_optimizer = opt.agent_params.optim(global_model.critic.parameters())
-    global_optimizers = [global_actor_optimizer,
-                         global_critic_optimizer]
-    # logs
-    global_logs = GlobalLogsDict[opt.agent_type]()
-    actor_logs = ActorLogsDict[opt.agent_type]()
-    learner_logs = LearnerLogsDict[opt.agent_type]()
-    evaluator_logs = EvaluatorLogsDict[opt.agent_type]()
 
     processes = []
     if opt.mode == 1:
+        # shared memory
+        opt.memory_params.state_shape = opt.state_shape
+        opt.memory_params.action_shape = opt.action_shape
+        opt.memory_params.reward_shape = opt.reward_shape
+        opt.memory_params.terminal_shape = opt.terminal_shape
+        global_memory = memory_prototype(opt.memory_params)
+        # shared model
+        global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_space, opt.action_shape)
+        if opt.model_file is not None: global_model.load_state_dict(torch.load(opt.model_file)) # this means finetuning on model_file
+        global_model.share_memory() # gradients are allocated lazily, so they are not shared here
+        # optimizer
+        global_optimizer = opt.agent_params.optim(global_model.parameters())
+        # logs
+        global_logs = GlobalLogsDict[opt.agent_type]()
+        actor_logs = ActorLogsDict[opt.agent_type]()
+        learner_logs = LearnerLogsDict[opt.agent_type]()
+        evaluator_logs = EvaluatorLogsDict[opt.agent_type]()
+
         # logger
         logger_fn = LoggersDict[opt.agent_type]
         p = mp.Process(target=logger_fn,
@@ -83,7 +83,7 @@ if __name__ == '__main__':
                                  model_prototype,
                                  global_memory,
                                  global_model,
-                                 global_optimizers
+                                 global_optimizer
                                 ))
             p.start()
             processes.append(p)
@@ -102,12 +102,10 @@ if __name__ == '__main__':
     elif opt.mode == 2:
         # tester
         tester_fn = TestersDict[opt.agent_type]
-        p = mp.Process(target=evaluator_fn,
+        p = mp.Process(target=tester_fn,
                        args=(opt.num_actors+opt.num_learners+2, opt,
-                             global_logs,
                              env_prototype,
-                             model_prototype,
-                             global_model))
+                             model_prototype))
         p.start()
         processes.append(p)
 

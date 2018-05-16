@@ -27,9 +27,9 @@ class GymEnv(Env):
         self.gym_log_dir = args.gym_log_dir
 
         # init envs
-        print("env config ---------->", str(process_ind), str(num_envs_per_process))
-        for i in range(self.num_envs_per_process):
-            print("env seed --->", str(args.seed + self.process_ind*self.num_envs_per_actor + i))
+        # print("env config ---------->", str(process_ind), str(num_envs_per_process))
+        # for i in range(self.num_envs_per_process):
+            # print("env seed --->", str(args.seed + self.process_ind*self.num_envs_per_actor + i))
         envs = [make_env(args.game, args.seed, self.process_ind*self.num_envs_per_actor+i, self.gym_log_dir)
                 for i in range(self.num_envs_per_process)]
 
@@ -50,7 +50,7 @@ class GymEnv(Env):
         return state.reshape(self.state_shape) # TODO
 
     def _preprocess_action(self, action):
-        return action.reshape(self.action_shape) # TODO
+        return action.reshape(self.action_shape) # NOTE: here using action_shape instead of action_space
 
     @property
     def state_shape(self):  # NOTE: here returns the shape after preprocessing, i.e., the shape that gets passed out that's pushed into memory
@@ -62,6 +62,13 @@ class GymEnv(Env):
 
     @property
     def action_shape(self):
+        if self.discrete:
+            return 1    # TODO: hardcoded for now
+        else:
+            return self.env.action_space.shape[0]
+
+    @property
+    def action_space(self):
         if self.discrete:
             return self.env.action_space.n
         else:
@@ -76,6 +83,10 @@ class GymEnv(Env):
                     self.action_low,
                     self.action_high)
         self.exp_state1, self.exp_reward, self.exp_terminal1, _ = self.env.step(execute_action)
+        if self.discrete: # NOTE: somehow gym returns float for discrete, ndarray for continuous
+            tmp_reward = self.exp_reward
+            self.exp_reward = np.ndarray(1)
+            self.exp_reward.fill(tmp_reward)
         return self._get_experience()
 
     def reset(self):

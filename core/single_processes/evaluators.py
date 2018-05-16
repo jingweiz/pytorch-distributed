@@ -17,7 +17,10 @@ def evaluator(process_ind, args,
     # memory
     # model
     local_device = torch.device('cpu')
-    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
+    local_model = model_prototype(args.model_params,
+                                  args.state_shape,
+                                  args.action_space,
+                                  args.action_shape).to(local_device)
     # sync global model to local
     local_model.load_state_dict(global_model.state_dict())
 
@@ -85,5 +88,8 @@ def evaluator(process_ind, args,
                 evaluator_logs.nepisodes.value = nepisodes
                 evaluator_logs.nepisodes_solved.value = nepisodes_solved
                 evaluator_logs.logger_lock.value = True
+
+            # save model
+            torch.save(global_model.state_dict(), args.model_name)
 
             last_eval_time = time.time()

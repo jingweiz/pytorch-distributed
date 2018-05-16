@@ -2,30 +2,33 @@ from core.single_processes.logs import GlobalLogs
 from core.single_processes.logs import ActorLogs
 from core.single_processes.logs import DQNLearnerLogs, DDPGLearnerLogs
 from core.single_processes.logs import EvaluatorLogs
-GlobalLogsDict = {"discrete":   GlobalLogs,
-                  "continuous": GlobalLogs}
-ActorLogsDict = {"discrete":   ActorLogs,
-                 "continuous": ActorLogs}
-LearnerLogsDict = {"discrete":   DQNLearnerLogs,
-                   "continuous": DDPGLearnerLogs}
-EvaluatorLogsDict = {"discrete":   EvaluatorLogs,
-                     "continuous": EvaluatorLogs}
+GlobalLogsDict = {"dqn":  GlobalLogs,
+                  "ddpg": GlobalLogs}
+ActorLogsDict = {"dqn":  ActorLogs,
+                 "ddpg": ActorLogs}
+LearnerLogsDict = {"dqn":  DQNLearnerLogs,
+                   "ddpg": DDPGLearnerLogs}
+EvaluatorLogsDict = {"dqn":  EvaluatorLogs,
+                     "ddpg": EvaluatorLogs}
 
-from core.single_processes.loggers import dqn_logger, ddpg_logger
-from core.single_processes.actors import ddpg_actor
-from core.single_processes.learners import ddpg_learner
+from core.single_processes.dqn_logger import dqn_logger
+from core.single_processes.ddpg_logger import ddpg_logger
+from core.single_processes.dqn_actor import dqn_actor
+from core.single_processes.ddpg_actor import ddpg_actor
+from core.single_processes.dqn_learner import dqn_learner
+from core.single_processes.ddpg_learner import ddpg_learner
 from core.single_processes.evaluators import evaluator
 from core.single_processes.testers import tester
-LoggersDict = {"discrete":   dqn_logger,
-               "continuous": ddpg_logger}
-ActorsDict = {"discrete":   None,
-              "continuous": ddpg_actor}
-LearnersDict = {"discrete":   None,
-                "continuous": ddpg_learner}
-EvaluatorsDict = {"discrete":   evaluator,
-                  "continuous": evaluator}
-TestersDict = {"discrete":   tester,
-               "continuous": tester}
+LoggersDict = {"dqn":  dqn_logger,
+               "ddpg": ddpg_logger}
+ActorsDict = {"dqn":  dqn_actor,
+              "ddpg": ddpg_actor}
+LearnersDict = {"dqn":  dqn_learner,
+                "ddpg": ddpg_learner}
+EvaluatorsDict = {"dqn":  evaluator,
+                  "ddpg": evaluator}
+TestersDict = {"dqn":  tester,
+               "ddpg": tester}
 
 from core.envs.gym_env import GymEnv
 EnvsDict = {"gym": GymEnv}  # gym wrapper

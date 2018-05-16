@@ -11,7 +11,7 @@ def ddpg_learner(process_ind, args,
                  model_prototype,
                  global_memory,
                  global_model,
-                 global_optimizers):
+                 global_optimizer):
     # logs
     print("---------------------------->", process_ind, "learner")
     # env
@@ -19,13 +19,17 @@ def ddpg_learner(process_ind, args,
     # model
     local_device = torch.device('cuda') # TODO: should assign each learner to a seperate gpu
     global_device = torch.device('cpu')
-    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
-    local_target_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
+    local_model = model_prototype(args.model_params,
+                                  args.state_shape,
+                                  args.action_space,
+                                  args.action_shape).to(local_device)
+    local_target_model = model_prototype(args.model_params,
+                                         args.state_shape,
+                                         args.action_space,
+                                         args.action_shape).to(local_device)
     # sync global model to local
     local_model.load_state_dict(global_model.state_dict())
     update_target_model(local_model, local_target_model) # do a hard update in the beginning
-    # optimizers
-    global_actor_optimizer, global_critic_optimizer = global_optimizers
 
     # params
 
@@ -44,16 +48,15 @@ def ddpg_learner(process_ind, args,
             state0s, actions, rewards, state1s, terminal1s = experiences
 
             # learn on this batch - setup
+            global_optimizer.zero_grad()
             state0s = state0s.to(local_device)
 
             # learn on this batch - actor loss
             _, qvalues = local_model(state0s)
             actor_loss = - qvalues.mean()
 
-            global_actor_optimizer.zero_grad()
             local_model.actor.zero_grad()
             actor_loss.backward()
-            # TODO: check here if we need clipping
             nn.utils.clip_grad_value_(local_model.actor.parameters(), args.agent_params.clip_grad)
 
             # learn on this batch - critic loss
@@ -62,16 +65,13 @@ def ddpg_learner(process_ind, args,
             predict_qvalues = local_model.forward_critic(state0s, actions.to(local_device))
             critic_loss = args.agent_params.value_criteria(predict_qvalues, target_qvalues)
 
-            global_critic_optimizer.zero_grad()
             local_model.critic.zero_grad()
             critic_loss.backward()
-            # TODO: check here if we need clipping
             nn.utils.clip_grad_value_(local_model.critic.parameters(), args.agent_params.clip_grad)
 
             # learn on this batch - sync local grads to global
             ensure_global_grads(local_model, global_model, local_device, global_device)
-            global_actor_optimizer.step()
-            global_critic_optimizer.step()
+            global_optimizer.step()
 
             # update target_model
             update_target_model(local_model, local_target_model, args.agent_params.target_model_update)

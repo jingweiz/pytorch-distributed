@@ -11,15 +11,15 @@ from optims.sharedRMSprop import SharedRMSprop
 
 CONFIGS = [
 # agent_type, env_type, game,          memory_type, model_type
-[ "dqn",      "gym",    "Pong-ram-v0", "shared",    "discrete-mlp"  ], # 0 *
-[ "ddpg",     "gym",    "Pendulum-v0", "shared",    "continuous-mlp"], # 1 *
+[ "dqn",      "gym",    "Pong-ram-v0", "shared",    "dqn-mlp" ], # 0
+[ "ddpg",     "gym",    "Pendulum-v0", "shared",    "ddpg-mlp"], # 1
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051500"    # "yymmdd##"
+        self.timestamp  = "18051600"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -102,7 +102,7 @@ class AgentParams(Params):
     def __init__(self):
         super(AgentParams, self).__init__()
 
-        if 'discrete' in self.agent_type:
+        if self.agent_type == "dqn":
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
             # self.optim = SharedAdam
@@ -112,33 +112,6 @@ class AgentParams(Params):
             self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = 100#np.inf
-            self.lr                  = 1e-4
-            self.lr_decay            = False
-            self.weight_decay        = 0.
-            self.eval_freq           = 1000#00  # NOTE: here means every this many steps
-            self.eval_steps          = 1000
-            self.prog_freq           = self.eval_freq
-            self.test_nepisodes      = 50
-            # off-policy specifics
-            self.learn_start         = 3000   # start update params after this many steps
-            self.batch_size          = 32
-            self.target_model_update = 1e-3#1000
-            # dqn specifics
-            self.eps_start           = 1
-            self.eps_end             = 0.1
-            self.eps_eval            = 0.#0.05
-            self.eps_decay           = 1000000
-        elif 'continuous' in self.agent_type:
-            # criteria and optimizer
-            self.value_criteria = nn.MSELoss()
-            # self.optim = SharedAdam
-            self.optim = torch.optim.Adam
-            # generic hyperparameters
-            self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 1000000 # max #iterations
-            self.gamma               = 0.99
-            self.clip_grad           = 100#np.inf
-            # self.clip_grad           = 0.5#np.inf
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
@@ -148,7 +121,36 @@ class AgentParams(Params):
             self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
             self.evaluator_freq      = 60   # eval every this many secs
             self.evaluator_steps     = 1000 # eval for this many steps
-            self.test_nepisodes      = 50
+            self.tester_nepisodes    = 50
+            # off-policy specifics
+            self.learn_start         = 200   # start update params after this many steps
+            self.batch_size          = 64
+            self.target_model_update = 1e-3#1000
+            # dqn specifics
+            self.eps_start           = 1
+            self.eps_end             = 0.1
+            self.eps_eval            = 0.#0.05
+            self.eps_decay           = 1000000
+        elif self.agent_type == "ddpg":
+            # criteria and optimizer
+            self.value_criteria = nn.MSELoss()
+            # self.optim = SharedAdam
+            self.optim = torch.optim.Adam
+            # generic hyperparameters
+            self.num_tasks           = 1    # NOTE: always put main task at last
+            self.steps               = 1000000 # max #iterations
+            self.gamma               = 0.99
+            self.clip_grad           = 100
+            self.lr                  = 1e-4
+            self.lr_decay            = False
+            self.weight_decay        = 0.
+            # logger configs
+            self.logger_freq         = 15   # log every this many secs
+            self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
+            self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
+            self.evaluator_freq      = 60   # eval every this many secs
+            self.evaluator_steps     = 1000 # eval for this many steps
+            self.tester_nepisodes    = 50
             # off-policy specifics
             self.learn_start         = 200   # start update params after this many steps
             self.batch_size          = 64

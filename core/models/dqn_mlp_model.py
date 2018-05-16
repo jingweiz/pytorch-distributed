@@ -7,8 +7,8 @@ from core.model import Model
 
 
 class DQNMlpModel(Model):
-    def __init__(self, args, input_dims, output_dims):
-        super(DQNMlpModel, self).__init__(args, input_dims, output_dims)
+    def __init__(self, args, input_dims, output_dims, action_dims):
+        super(DQNMlpModel, self).__init__(args, input_dims, output_dims, action_dims)
 
         # model_params for this model
 
@@ -40,8 +40,14 @@ class DQNMlpModel(Model):
         qvalue = self.critic(input)
         return qvalue
 
-    def get_action(self, input, eps=1.):
+    def get_action(self, input, eps=0.):
         input = torch.FloatTensor(input).unsqueeze(0)
-        action = self.forward(input)
-        # TODO: episilon greedy
+        if eps > 0. and np.random.uniform() < eps: # then we choose a random action
+            action = np.random.randint(self.output_dims,
+                                       size=(input.size(0),
+                                             self.action_dims))
+        else:
+            qvalue = self.forward(input)
+            _, action = qvalue.max(dim=1, keepdim=True)
+            action = action.numpy()
         return action

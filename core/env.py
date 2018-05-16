@@ -47,7 +47,11 @@ class Env(object):
         raise NotImplementedError("not implemented in base class")
 
     @property
-    def action_shape(self):
+    def action_shape(self): # for discrete envs, e.g., action_space=6,action_shape=1
+        raise NotImplementedError("not implemented in base class")
+
+    @property
+    def action_space(self): # for discrete envs, e.g., action_space=6,action_shape=1
         raise NotImplementedError("not implemented in base class")
 
     def render(self):       # render using the original gl window

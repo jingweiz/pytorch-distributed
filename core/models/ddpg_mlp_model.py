@@ -7,8 +7,8 @@ from core.model import Model
 
 
 class DDPGMlpModel(Model):
-    def __init__(self, args, input_dims, output_dims):
-        super(DDPGMlpModel, self).__init__(args, input_dims, output_dims)
+    def __init__(self, args, input_dims, output_dims, action_dims):
+        super(DDPGMlpModel, self).__init__(args, input_dims, output_dims, action_dims)
 
         # model_params for this model
 

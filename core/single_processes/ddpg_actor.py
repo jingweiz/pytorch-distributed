@@ -18,12 +18,15 @@ def ddpg_actor(process_ind, args,
     # memory
     # model
     local_device = torch.device('cpu')
-    local_model = model_prototype(args.model_params, args.state_shape, args.action_shape).to(local_device)
+    local_model = model_prototype(args.model_params,
+                                  args.state_shape,
+                                  args.action_space,
+                                  args.action_shape).to(local_device)
     # sync global model to local
     local_model.load_state_dict(global_model.state_dict())
 
     # params
-    random_process = args.agent_params.random_process(size=args.action_shape,
+    random_process = args.agent_params.random_process(size=args.action_space,
         theta=0.15, sigma=0.3, n_steps_annealing=args.memory_params.memory_size*100)
 
     # setup
