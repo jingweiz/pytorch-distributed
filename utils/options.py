@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 
 from utils.random_process import OrnsteinUhlenbeckProcess
-from optims.sharedAdam import SharedAdam
-from optims.sharedRMSprop import SharedRMSprop
+# from optims.sharedAdam import SharedAdam
+# from optims.sharedRMSprop import SharedRMSprop
 
 CONFIGS = [
 # agent_type, env_type, game,          memory_type, model_type
@@ -64,8 +64,8 @@ class EnvParams(Params):
             self.state_wid = None       # depends on the env
         elif "cnn" in self.model_type:  # raw image inputs, need to resize or crop to this step_size
             self.state_cha = 1
-            self.state_hei = 48         # TODO:
-            self.state_wid = 48         # TODO:
+            self.state_hei = 48
+            self.state_wid = 48
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
@@ -84,7 +84,7 @@ class MemoryParams(Params):
         super(MemoryParams, self).__init__()
 
         if self.memory_type == "shared":
-            self.memory_size = 50000#1000000
+            self.memory_size = 50000
 
 
 class ModelParams(Params):
@@ -105,36 +105,6 @@ class AgentParams(Params):
         if self.agent_type == "dqn":
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
-            # self.optim = SharedAdam
-            self.optim = torch.optim.Adam
-            # generic hyperparameters
-            self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 1000000 # max #iterations
-            self.gamma               = 0.99
-            self.clip_grad           = 100#np.inf
-            self.lr                  = 1e-4
-            self.lr_decay            = False
-            self.weight_decay        = 0.
-            # logger configs
-            self.logger_freq         = 15   # log every this many secs
-            self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
-            self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
-            self.evaluator_freq      = 60   # eval every this many secs
-            self.evaluator_steps     = 1000 # eval for this many steps
-            self.tester_nepisodes    = 50
-            # off-policy specifics
-            self.learn_start         = 200   # start update params after this many steps
-            self.batch_size          = 64
-            self.target_model_update = 1e-3#1000
-            # dqn specifics
-            self.eps_start           = 1
-            self.eps_end             = 0.1
-            self.eps_eval            = 0.#0.05
-            self.eps_decay           = 1000000
-        elif self.agent_type == "ddpg":
-            # criteria and optimizer
-            self.value_criteria = nn.MSELoss()
-            # self.optim = SharedAdam
             self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
@@ -154,7 +124,34 @@ class AgentParams(Params):
             # off-policy specifics
             self.learn_start         = 200   # start update params after this many steps
             self.batch_size          = 64
-            self.target_model_update = 1e-3#1000
+            self.target_model_update = 1e-3
+            # dqn specifics
+            self.eps_start           = 1
+            self.eps_end             = 0.1
+            self.eps_decay           = 50000
+        elif self.agent_type == "ddpg":
+            # criteria and optimizer
+            self.value_criteria = nn.MSELoss()
+            self.optim = torch.optim.Adam
+            # generic hyperparameters
+            self.num_tasks           = 1    # NOTE: always put main task at last
+            self.steps               = 1000000 # max #iterations
+            self.gamma               = 0.99
+            self.clip_grad           = 100
+            self.lr                  = 1e-4
+            self.lr_decay            = False
+            self.weight_decay        = 0.
+            # logger configs
+            self.logger_freq         = 15   # log every this many secs
+            self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
+            self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
+            self.evaluator_freq      = 60   # eval every this many secs
+            self.evaluator_steps     = 1000 # eval for this many steps
+            self.tester_nepisodes    = 50
+            # off-policy specifics
+            self.learn_start         = 200   # start update params after this many steps
+            self.batch_size          = 64
+            self.target_model_update = 1e-3
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
 
