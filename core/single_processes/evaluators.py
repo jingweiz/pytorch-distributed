@@ -90,6 +90,8 @@ def evaluator(process_ind, args,
                 evaluator_logs.logger_lock.value = True
 
             # save model
+            print("Saving model " + args.model_name + " ...")
             torch.save(global_model.state_dict(), args.model_name)
+            print("Saved  model " + args.model_name + ".")
 
             last_eval_time = time.time()

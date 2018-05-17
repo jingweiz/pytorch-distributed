@@ -19,7 +19,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051600"    # "yymmdd##"
+        self.timestamp  = "18051701"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -29,11 +29,10 @@ class Params(object):
         self.seed       = 100
         self.render     = False         # whether render the window from the original envs or not
         self.visualize  = True          # whether do online plotting and stuff or not
-        self.save_best  = False         # save model w/ highest reward if True, otherwise always save the latest model
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
         self.num_actors = 8
-        self.num_learners = 1           # TODO: can also set each learner to a separate device
+        self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
         self.refs       = self.machine + "_" + self.timestamp
@@ -119,13 +118,14 @@ class AgentParams(Params):
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
             self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
             self.evaluator_freq      = 60   # eval every this many secs
-            self.evaluator_steps     = 1000 # eval for this many steps
+            self.evaluator_steps     = 3000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
             self.learn_start         = 200   # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
             # dqn specifics
+            self.enable_double       = True#False
             self.eps_start           = 1
             self.eps_end             = 0.1
             self.eps_decay           = 50000

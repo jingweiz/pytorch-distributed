@@ -53,9 +53,12 @@ def dqn_learner(process_ind, args,
             state1s = state1s.to(local_device)
 
             # learn on this batch - critic loss - double q
-            predict_next_qvalues = local_model(state1s)
-            _, max_next_actions = predict_next_qvalues.max(dim=1, keepdim=True)
-            target_qvalues = local_target_model(state1s).gather(1, max_next_actions)
+            if args.agent_params.enable_double:
+                predict_next_qvalues = local_model(state1s)
+                _, max_next_actions = predict_next_qvalues.max(dim=1, keepdim=True)
+                target_qvalues = local_target_model(state1s).gather(1, max_next_actions)
+            else:
+                target_qvalues, _ = local_target_model(state1s).max(dim=1, keepdim=True)
             target_qvalues = rewards.to(local_device) + args.agent_params.gamma * target_qvalues.detach() * (1 - terminal1s.to(local_device))
             predict_qvalues = local_model(state0s).gather(1, actions.long().to(local_device))
             critic_loss = args.agent_params.value_criteria(predict_qvalues, target_qvalues)

@@ -50,6 +50,7 @@ def ddpg_learner(process_ind, args,
             # learn on this batch - setup
             global_optimizer.zero_grad()
             state0s = state0s.to(local_device)
+            state1s = state1s.to(local_device)
 
             # learn on this batch - actor loss
             _, qvalues = local_model(state0s)
@@ -60,7 +61,7 @@ def ddpg_learner(process_ind, args,
             nn.utils.clip_grad_value_(local_model.actor.parameters(), args.agent_params.clip_grad)
 
             # learn on this batch - critic loss
-            _, target_qvalues = local_target_model(state1s.to(local_device))
+            _, target_qvalues = local_target_model(state1s)
             target_qvalues = rewards.to(local_device) + args.agent_params.gamma * target_qvalues.detach() * (1 - terminal1s.to(local_device))
             predict_qvalues = local_model.forward_critic(state0s, actions.to(local_device))
             critic_loss = args.agent_params.value_criteria(predict_qvalues, target_qvalues)
