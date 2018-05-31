@@ -60,7 +60,7 @@ def dqn_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        eps = args.agent_params.eps_end + max(0, (args.agent_params.eps_start - args.agent_params.eps_end) * (args.agent_params.eps_decay - max(0, step / args.num_actors - args.agent_params.learn_start)) / args.agent_params.eps_decay)
+        eps = args.agent_params.eps_end + max(0, (args.agent_params.eps_start - args.agent_params.eps_end) * (args.agent_params.eps_decay - max(0, step - args.agent_params.learn_start)) / args.agent_params.eps_decay)
         action = local_model.get_action(experience.state1, eps)
         experience = env.step(action)
 
