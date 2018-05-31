@@ -1,6 +1,5 @@
 import numpy as np
 from collections import deque
-from copy import copy
 import torch
 
 from utils.helpers import reset_experience
@@ -49,8 +48,11 @@ def ddpg_actor(process_ind, args,
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     # local buffers for hist_len && nstep
-    state0_stacked = deque(maxlen=args.agent_params.hist_len)
-    state1_stacked = deque(maxlen=args.agent_params.hist_len)
+    state1_stacked   = deque(maxlen=args.agent_params.hist_len)
+    states_nstep     = deque(maxlen=args.agent_params.nstep + 1)
+    actions_nstep    = deque(maxlen=args.agent_params.nstep)
+    rewards_nstep    = deque(maxlen=args.agent_params.nstep)
+    terminal1s_nstep = deque(maxlen=args.agent_params.nstep)
     while global_logs.learner_step.value < args.agent_params.steps:
         # deal w/ reset
         if flag_reset:
@@ -63,10 +65,14 @@ def ddpg_actor(process_ind, args,
             experience = env.reset()
             assert experience.state1 is not None
             # local buffers for hist_len && nstep
-            state0_stacked.clear()
             state1_stacked.clear()
             for i in range(args.agent_params.hist_len):
                 state1_stacked.append(experience.state1)
+            states_nstep.clear()
+            states_nstep.append(np.array(list((state1_stacked))))
+            actions_nstep.clear()
+            rewards_nstep.clear()
+            terminal1s_nstep.clear()
             # flags
             flag_reset = False
 
@@ -75,15 +81,19 @@ def ddpg_actor(process_ind, args,
         experience = env.step(action)
 
         # special treatments for hist_len && nstep before push to memory
-        state0_stacked = copy(state1_stacked)
         state1_stacked.append(experience.state1)
+        states_nstep.append(np.array(list((state1_stacked))))
+        actions_nstep.append(experience.action)
+        rewards_nstep.append(experience.reward)
+        terminal1s_nstep.append(experience.terminal1)
 
         # push to memory
-        global_memory.feed((np.array(list(state0_stacked)),
-                            experience.action,
-                            experience.reward,
-                            np.array(list(state1_stacked)),
-                            experience.terminal1))
+        global_memory.feed((states_nstep[0],
+                            actions_nstep[0],
+                            [np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])],
+                            [np.power(args.agent_params.gamma, len(states_nstep)-1)],
+                            states_nstep[-1],
+                            terminal1s_nstep[0]))
 
         # check conditions & update flags
         if experience.terminal1:

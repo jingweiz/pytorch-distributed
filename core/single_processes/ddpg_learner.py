@@ -45,7 +45,7 @@ def ddpg_learner(process_ind, args,
             local_model.load_state_dict(global_model.state_dict())
             # sample batch from global_memory
             experiences = global_memory.sample(args.agent_params.batch_size)
-            state0s, actions, rewards, state1s, terminal1s = experiences
+            state0s, actions, rewards, gamma1s, state1s, terminal1s = experiences
 
             # learn on this batch - setup
             global_optimizer.zero_grad()
@@ -62,7 +62,7 @@ def ddpg_learner(process_ind, args,
 
             # learn on this batch - critic loss
             _, target_qvalues = local_target_model(state1s)
-            target_qvalues = rewards.to(local_device) + args.agent_params.gamma * target_qvalues.detach() * (1 - terminal1s.to(local_device))
+            target_qvalues = rewards.to(local_device) + gamma1s.to(local_device) * target_qvalues.detach() * (1 - terminal1s.to(local_device))
             predict_qvalues = local_model.forward_critic(state0s, actions.to(local_device))
             critic_loss = args.agent_params.value_criteria(predict_qvalues, target_qvalues)
 

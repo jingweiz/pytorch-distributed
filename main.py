@@ -19,12 +19,13 @@ if __name__ == '__main__':
     memory_prototype = MemoriesDict[opt.memory_type]
     model_prototype = ModelsDict[opt.model_type]
 
-    # dummy env to get state/action/reward/terminal_shape & action_space
+    # dummy env to get state/action/reward/gamma/terminal_shape & action_space
     dummy_env = env_prototype(opt.env_params, 0)
     opt.state_shape = dummy_env.state_shape
     opt.action_shape = dummy_env.action_shape
     opt.action_space = dummy_env.action_space
     opt.reward_shape = opt.agent_params.num_tasks
+    opt.gamma_shape = opt.agent_params.num_tasks
     opt.terminal_shape = opt.agent_params.num_tasks
     del dummy_env
 
@@ -37,6 +38,7 @@ if __name__ == '__main__':
         opt.memory_params.state_shape = opt.state_shape
         opt.memory_params.action_shape = opt.action_shape
         opt.memory_params.reward_shape = opt.reward_shape
+        opt.memory_params.gamma_shape = opt.gamma_shape
         opt.memory_params.terminal_shape = opt.terminal_shape
         global_memory = memory_prototype(opt.memory_params)
         # shared model

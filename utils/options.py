@@ -32,7 +32,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 8
+        self.num_actors = 8 
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -162,7 +162,7 @@ class AgentParams(Params):
             self.batch_size          = 64
             self.target_model_update = 1e-3
             self.hist_len            = 1    # NOTE: each sample state contains this many frames
-            self.nstep               = 1    # NOTE: this many steps lookahead
+            self.nstep               = 5    # NOTE: this many steps lookahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
 
