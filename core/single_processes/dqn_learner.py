@@ -81,5 +81,5 @@ def dqn_learner(process_ind, args,
 
             # report stats
             if step % args.agent_params.learner_freq == 0: # then push local stats to logger & reset local
-                learner_logs.critic_loss.value += critic_loss
+                learner_logs.critic_loss.value += critic_loss.item()
                 learner_logs.loss_counter.value += 1
