@@ -20,7 +20,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18053004"    # "yymmdd##"
+        self.timestamp  = "18053005"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -32,7 +32,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 1
+        self.num_actors = 8
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -66,6 +66,7 @@ class EnvParams(Params):
             self.state_cha = 1          # NOTE: equals hist_len
             self.state_hei = 42
             self.state_wid = 42
+        assert self.state_cha == 1      # NOTE: to ease storing into memory
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
@@ -85,6 +86,10 @@ class MemoryParams(Params):
 
         if self.memory_type == "shared":
             self.memory_size = 50000
+            self.enable_prioritized = False     # TODO: tbi
+            if self.enable_prioritized:
+                self.priority_exponent = 0.5    # TODO: take from rainbow, check for distributed
+                self.priority_weight = 0.4      # TODO: take from rainbow, check for distributed
 
 
 class ModelParams(Params):
@@ -105,7 +110,8 @@ class AgentParams(Params):
         if self.agent_type == "dqn":
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
-            self.optim = torch.optim.RMSprop
+            # self.optim = torch.optim.RMSprop
+            self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 1000000 # max #iterations

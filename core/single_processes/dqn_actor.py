@@ -1,3 +1,6 @@
+import numpy as np
+from collections import deque
+from copy import copy
 import torch
 
 from utils.helpers import reset_experience
@@ -43,7 +46,9 @@ def dqn_actor(process_ind, args,
     nepisodes_solved = 0
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
-    last_state1 = None
+    # local buffers for hist_len && nstep
+    state0_stacked = deque(maxlen=args.agent_params.hist_len)
+    state1_stacked = deque(maxlen=args.agent_params.hist_len)
     while global_logs.learner_step.value < args.agent_params.steps:
         # deal w/ reset
         if flag_reset:
@@ -55,22 +60,30 @@ def dqn_actor(process_ind, args,
             # reset game
             experience = env.reset()
             assert experience.state1 is not None
-            last_state1 = experience.state1
+            # local buffers for hist_len && nstep
+            state0_stacked.clear()
+            state1_stacked.clear()
+            for i in range(args.agent_params.hist_len):
+                state1_stacked.append(experience.state1)
             # flags
             flag_reset = False
 
         # run a single step
         eps = args.agent_params.eps_end + max(0, (args.agent_params.eps_start - args.agent_params.eps_end) * (args.agent_params.eps_decay - max(0, step - args.agent_params.learn_start)) / args.agent_params.eps_decay)
-        action = local_model.get_action(experience.state1, eps)
+        state1_stacked_array = np.array(list(state1_stacked)) # NOTE: first converting to list is faster than directly to array
+        action = local_model.get_action(state1_stacked_array, eps)
         experience = env.step(action)
 
+        # special treatments for hist_len && nstep before push to memory
+        state0_stacked = copy(state1_stacked)
+        state1_stacked.append(experience.state1)
+
         # push to memory
-        global_memory.feed((last_state1,
+        global_memory.feed((np.array(list(state0_stacked)),
                             experience.action,
                             experience.reward,
-                            experience.state1,
+                            state1_stacked_array,
                             experience.terminal1))
-        last_state1 = experience.state1
 
         # check conditions & update flags
         if experience.terminal1:
