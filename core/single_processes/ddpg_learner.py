@@ -75,9 +75,9 @@ def ddpg_learner(process_ind, args,
             global_optimizer.step()
 
             # update target_model
-            update_target_model(local_model, local_target_model, args.agent_params.target_model_update)
+            update_target_model(local_model, local_target_model, args.agent_params.target_model_update, step)
 
-            # update counters & stats
+            # update counters
             with global_logs.learner_step.get_lock():
                 global_logs.learner_step.value += 1
             step += 1

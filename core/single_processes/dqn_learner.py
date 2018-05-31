@@ -52,12 +52,12 @@ def dqn_learner(process_ind, args,
             state0s = state0s.to(local_device)
             state1s = state1s.to(local_device)
 
-            # learn on this batch - critic loss - double q
-            if args.agent_params.enable_double:
+            # learn on this batch - critic loss
+            if args.agent_params.enable_double: # double q
                 predict_next_qvalues = local_model(state1s)
                 _, max_next_actions = predict_next_qvalues.max(dim=1, keepdim=True)
                 target_qvalues = local_target_model(state1s).gather(1, max_next_actions)
-            else:
+            else:                               # dqn
                 target_qvalues, _ = local_target_model(state1s).max(dim=1, keepdim=True)
             target_qvalues = rewards.to(local_device) + args.agent_params.gamma * target_qvalues.detach() * (1 - terminal1s.to(local_device))
             predict_qvalues = local_model(state0s).gather(1, actions.long().to(local_device))
@@ -72,9 +72,9 @@ def dqn_learner(process_ind, args,
             global_optimizer.step()
 
             # update target_model
-            update_target_model(local_model, local_target_model, args.agent_params.target_model_update)
+            update_target_model(local_model, local_target_model, args.agent_params.target_model_update, step)
 
-            # update counters & stats
+            # update counters
             with global_logs.learner_step.get_lock():
                 global_logs.learner_step.value += 1
             step += 1

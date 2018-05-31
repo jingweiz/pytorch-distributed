@@ -16,13 +16,13 @@ def reset_experience():
 
 
 # target model
-def update_target_model(model, target_model, target_model_update=1.):
-    if target_model_update >= 1.:   # hard update
-        target_model.load_state_dict(model.state_dict())
-    else:                           # soft update
+def update_target_model(model, target_model, target_model_update=1., learner_step=0):
+    if target_model_update < 1.:                    # soft update
         for target_param, param in zip(target_model.parameters(), model.parameters()):
             target_param.data.copy_(target_param.data * (1. - target_model_update) +
                                     param.data * target_model_update)
+    elif learner_step % target_model_update == 0:   # hard update
+        target_model.load_state_dict(model.state_dict())
 
 
 def ensure_global_grads(local_model, global_model, local_device, global_device=torch.device('cpu')):

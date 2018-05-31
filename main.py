@@ -19,7 +19,7 @@ if __name__ == '__main__':
     memory_prototype = MemoriesDict[opt.memory_type]
     model_prototype = ModelsDict[opt.model_type]
 
-    # dummy env to get state/action/reward/terminal_space & action_shape
+    # dummy env to get state/action/reward/terminal_shape & action_space
     dummy_env = env_prototype(opt.env_params, 0)
     opt.state_shape = dummy_env.state_shape
     opt.action_shape = dummy_env.action_shape
@@ -27,6 +27,9 @@ if __name__ == '__main__':
     opt.reward_shape = opt.agent_params.num_tasks
     opt.terminal_shape = opt.agent_params.num_tasks
     del dummy_env
+
+    # NOTE: support for hist_len > 1
+    opt.state_shape[0] = opt.agent_params.hist_len
 
     processes = []
     if opt.mode == 1:

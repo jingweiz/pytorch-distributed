@@ -10,16 +10,17 @@ from utils.random_process import OrnsteinUhlenbeckProcess
 # from optims.sharedRMSprop import SharedRMSprop
 
 CONFIGS = [
-# agent_type, env_type, game,          memory_type, model_type
-[ "dqn",      "gym",    "Pong-ram-v0", "shared",    "dqn-mlp" ], # 0
-[ "ddpg",     "gym",    "Pendulum-v0", "shared",    "ddpg-mlp"], # 1
+# agent_type, env_type, game,                 memory_type, model_type
+[ "dqn",      "gym",    "Pong-ram-v0",        "shared",    "dqn-mlp" ], # 0
+[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 1
+[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 2
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18051701"    # "yymmdd##"
+        self.timestamp  = "18053004"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -31,7 +32,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 8
+        self.num_actors = 1
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -58,13 +59,13 @@ class EnvParams(Params):
 
         # for preprocessing the states before outputing from env
         if "mlp" in self.model_type:    # low dim inputs, no preprocessing or resizing
-            self.state_cha = 1
-            self.state_hei = 1          #
+            self.state_cha = 1          # NOTE: equals hist_len
+            self.state_hei = 1          # NOTE: always 1 for mlp's
             self.state_wid = None       # depends on the env
         elif "cnn" in self.model_type:  # raw image inputs, need to resize or crop to this step_size
-            self.state_cha = 1
-            self.state_hei = 48
-            self.state_wid = 48
+            self.state_cha = 1          # NOTE: equals hist_len
+            self.state_hei = 42
+            self.state_wid = 42
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
@@ -104,13 +105,13 @@ class AgentParams(Params):
         if self.agent_type == "dqn":
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
-            self.optim = torch.optim.Adam
+            self.optim = torch.optim.RMSprop
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
-            self.clip_grad           = 100
-            self.lr                  = 1e-4
+            self.clip_grad           = 40#100
+            self.lr                  = 2.5e-4/4.
             self.lr_decay            = False
             self.weight_decay        = 0.
             # logger configs
@@ -121,9 +122,11 @@ class AgentParams(Params):
             self.evaluator_steps     = 3000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
-            self.learn_start         = 200   # start update params after this many steps
+            self.learn_start         = 200  # start update params after this many steps
             self.batch_size          = 64
-            self.target_model_update = 1e-3
+            self.target_model_update = 1e3#1e-3
+            self.hist_len            = 4    # NOTE: each sample state contains this many frames
+            self.nstep               = 1
             # dqn specifics
             self.enable_double       = True#False
             self.eps_start           = 1
@@ -149,9 +152,11 @@ class AgentParams(Params):
             self.evaluator_steps     = 1000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
-            self.learn_start         = 200   # start update params after this many steps
+            self.learn_start         = 200  # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
+            self.hist_len            = 1    # NOTE: each sample state contains this many frames
+            self.nstep               = 1    # NOTE: this many steps lookahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
 
