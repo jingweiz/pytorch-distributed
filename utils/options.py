@@ -20,10 +20,10 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18053005"    # "yymmdd##"
+        self.timestamp  = "18053100"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 0
+        self.config     = 2
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 

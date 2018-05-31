@@ -70,8 +70,7 @@ def dqn_actor(process_ind, args,
 
         # run a single step
         eps = args.agent_params.eps_end + max(0, (args.agent_params.eps_start - args.agent_params.eps_end) * (args.agent_params.eps_decay - max(0, step - args.agent_params.learn_start)) / args.agent_params.eps_decay)
-        state1_stacked_array = np.array(list(state1_stacked)) # NOTE: first converting to list is faster than directly to array
-        action = local_model.get_action(state1_stacked_array, eps)
+        action = local_model.get_action(np.array(list(state1_stacked)), eps) # NOTE: first converting to list is faster than directly to array
         experience = env.step(action)
 
         # special treatments for hist_len && nstep before push to memory
@@ -82,7 +81,7 @@ def dqn_actor(process_ind, args,
         global_memory.feed((np.array(list(state0_stacked)),
                             experience.action,
                             experience.reward,
-                            state1_stacked_array,
+                            np.array(list(state1_stacked)),
                             experience.terminal1))
 
         # check conditions & update flags

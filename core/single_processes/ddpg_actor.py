@@ -71,8 +71,7 @@ def ddpg_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        state1_stacked_array = np.array(list(state1_stacked)) # NOTE: first converting to list is faster than directly to array
-        action = local_model.get_action(state1_stacked_array, random_process.sample())
+        action = local_model.get_action(np.array(list(state1_stacked)), random_process.sample()) # NOTE: first converting to list is faster than directly to array
         experience = env.step(action)
 
         # special treatments for hist_len && nstep before push to memory
@@ -83,7 +82,7 @@ def ddpg_actor(process_ind, args,
         global_memory.feed((np.array(list(state0_stacked)),
                             experience.action,
                             experience.reward,
-                            state1_stacked_array,
+                            np.array(list(state1_stacked)),
                             experience.terminal1))
 
         # check conditions & update flags
