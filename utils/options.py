@@ -20,7 +20,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18060201"    # "yymmdd##"
+        self.timestamp  = "18060202"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -116,7 +116,7 @@ class AgentParams(Params):
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
-            self.clip_grad           = 40#100
+            self.clip_grad           = 40.#100
             self.lr                  = 2.5e-4/4.
             self.lr_decay            = False
             self.weight_decay        = 0.
@@ -139,6 +139,7 @@ class AgentParams(Params):
             self.eps_start           = 1
             self.eps_end             = 0.1
             self.eps_decay           = 50000
+            self.action_repetition   = 4
         elif self.agent_type == "ddpg":
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
@@ -147,7 +148,7 @@ class AgentParams(Params):
             self.num_tasks           = 1    # NOTE: always put main task at last
             self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
-            self.clip_grad           = 100
+            self.clip_grad           = 40.
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
@@ -167,6 +168,7 @@ class AgentParams(Params):
             self.nstep               = 5    # NOTE: this many steps lookahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
+            self.action_repetition   = 1    # NOTE: just to use the same evaluator & tester as dqn
 
 
 class Options(Params):

@@ -61,7 +61,12 @@ def tester(process_ind, args,
 
         # run a single step
         action = local_model.get_action(np.array(list(state1_stacked)))
-        experience = env.step(action)
+        reward = 0.
+        for _ in args.agent_params.action_repetition:
+            experience = env.step(action)
+            reward += experience.reward
+            if experience.terminal1:
+                break
 
         # special treatments for hist_len && nstep
         state1_stacked.append(experience.state1)
@@ -76,7 +81,7 @@ def tester(process_ind, args,
         # update counters & stats
         step += 1
         episode_steps += 1
-        episode_reward += experience.reward
+        episode_reward += reward
         if flag_reset:
             nepisodes += 1
             total_steps += episode_steps
