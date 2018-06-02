@@ -62,7 +62,7 @@ def tester(process_ind, args,
         # run a single step
         action = local_model.get_action(np.array(list(state1_stacked)))
         reward = 0.
-        for _ in args.agent_params.action_repetition:
+        for _ in range(args.agent_params.action_repetition):
             experience = env.step(action)
             reward += experience.reward
             if experience.terminal1:

@@ -77,7 +77,7 @@ def ddpg_actor(process_ind, args,
         # run a single step
         action = local_model.get_action(np.array(list(state1_stacked)), random_process.sample()) # NOTE: first converting to list is faster than directly to array
         reward = 0.
-        for _ in args.agent_params.action_repetition:
+        for _ in range(args.agent_params.action_repetition):
             experience = env.step(action)
             reward += experience.reward
             if experience.terminal1:
