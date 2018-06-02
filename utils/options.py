@@ -20,10 +20,10 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18053100"    # "yymmdd##"
+        self.timestamp  = "18060201"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 2
+        self.config     = 0
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
@@ -32,7 +32,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 8 
+        self.num_actors = 8
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -88,8 +88,8 @@ class MemoryParams(Params):
             self.memory_size = 50000
             self.enable_prioritized = False     # TODO: tbi
             if self.enable_prioritized:
-                self.priority_exponent = 0.5    # TODO: take from rainbow, check for distributed
-                self.priority_weight = 0.4      # TODO: take from rainbow, check for distributed
+                self.priority_exponent = 0.5    # TODO: taken from rainbow, check for distributed
+                self.priority_weight = 0.4      # TODO: taken from rainbow, check for distributed
 
 
 class ModelParams(Params):
@@ -120,6 +120,7 @@ class AgentParams(Params):
             self.lr                  = 2.5e-4/4.
             self.lr_decay            = False
             self.weight_decay        = 0.
+            self.actor_sync_freq     = 250  # sync global_model to actor's local_model every this many steps
             # logger configs
             self.logger_freq         = 15   # log every this many secs
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
@@ -130,11 +131,11 @@ class AgentParams(Params):
             # off-policy specifics
             self.learn_start         = 200  # start update params after this many steps
             self.batch_size          = 64
-            self.target_model_update = 1e3#1e-3
+            self.target_model_update = 1e-3
             self.hist_len            = 4    # NOTE: each sample state contains this many frames
             self.nstep               = 1
             # dqn specifics
-            self.enable_double       = True#False
+            self.enable_double       = False#True#False
             self.eps_start           = 1
             self.eps_end             = 0.1
             self.eps_decay           = 50000
@@ -150,6 +151,7 @@ class AgentParams(Params):
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
+            self.actor_sync_freq     = 250  # sync global_model to actor's local_model every this many steps
             # logger configs
             self.logger_freq         = 15   # log every this many secs
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps

@@ -56,8 +56,6 @@ def ddpg_actor(process_ind, args,
     while global_logs.learner_step.value < args.agent_params.steps:
         # deal w/ reset
         if flag_reset:
-            # sync global model to local before every new episode # TODO: check when to update?
-            local_model.load_state_dict(global_model.state_dict())
             # reset episode stats
             episode_steps = 0
             episode_reward = 0.
@@ -112,6 +110,10 @@ def ddpg_actor(process_ind, args,
             nepisodes += 1
             total_steps += episode_steps
             total_reward += episode_reward
+
+        # sync global model to local
+        if step % args.agent_params.actor_sync_freq == 0:
+            local_model.load_state_dict(global_model.state_dict())
 
         # report stats
         if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
