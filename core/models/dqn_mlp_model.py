@@ -14,26 +14,29 @@ class DQNMlpModel(Model):
 
         # critic
         self.critic = nn.Sequential(
-            nn.Linear(self.input_dims[0] * self.input_dims[1] * self.input_dims[2], 400),
-            nn.Tanh(),
-            nn.Linear(400, 300),
-            nn.Tanh(),
-            nn.Linear(300, self.output_dims),
+            nn.Linear(self.input_dims[0] * self.input_dims[1] * self.input_dims[2], 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, self.output_dims),
         )
 
         # reset
         self._reset()
 
     def _init_weights(self):
-        bound = 3e-3
-
-        # critic
-        nn.init.xavier_uniform_(self.critic[0].weight.data)
-        nn.init.constant_(self.critic[0].bias.data, 0)
-        nn.init.xavier_uniform_(self.critic[2].weight.data)
-        nn.init.constant_(self.critic[2].bias.data, 0)
-        nn.init.uniform_(self.critic[4].weight.data, -bound, bound)
-        nn.init.constant_(self.critic[4].bias.data, 0)
+        # bound = 3e-3
+        #
+        # # critic
+        # nn.init.xavier_uniform_(self.critic[0].weight.data)
+        # nn.init.constant_(self.critic[0].bias.data, 0)
+        # nn.init.xavier_uniform_(self.critic[2].weight.data)
+        # nn.init.constant_(self.critic[2].bias.data, 0)
+        # nn.init.uniform_(self.critic[4].weight.data, -bound, bound)
+        # nn.init.constant_(self.critic[4].bias.data, 0)
+        pass
 
     def forward(self, input):
         input = input.view(input.size(0), -1)

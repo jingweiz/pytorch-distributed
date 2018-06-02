@@ -20,7 +20,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18060202"    # "yymmdd##"
+        self.timestamp  = "18060205"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -85,7 +85,11 @@ class MemoryParams(Params):
         super(MemoryParams, self).__init__()
 
         if self.memory_type == "shared":
-            self.memory_size = 50000
+            if self.agent_type == "dqn":
+                self.memory_size = 1000000
+            elif self.agent_type == "ddpg":
+                self.memory_size = 50000
+
             self.enable_prioritized = False     # TODO: tbi
             if self.enable_prioritized:
                 self.priority_exponent = 0.5    # TODO: taken from rainbow, check for distributed
@@ -117,7 +121,7 @@ class AgentParams(Params):
             self.steps               = 1000000 # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = 40.#100
-            self.lr                  = 2.5e-4/4.
+            self.lr                  = 1e-4#2.5e-4/4.
             self.lr_decay            = False
             self.weight_decay        = 0.
             self.actor_sync_freq     = 250  # sync global_model to actor's local_model every this many steps
@@ -129,7 +133,7 @@ class AgentParams(Params):
             self.evaluator_steps     = 3000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
-            self.learn_start         = 200  # start update params after this many steps
+            self.learn_start         = 50000 # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
             self.hist_len            = 4    # NOTE: each sample state contains this many frames
@@ -138,7 +142,6 @@ class AgentParams(Params):
             self.enable_double       = False#True#False
             self.eps_start           = 1
             self.eps_end             = 0.1
-            self.eps_decay           = 50000
             self.action_repetition   = 4
         elif self.agent_type == "ddpg":
             # criteria and optimizer
