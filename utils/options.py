@@ -85,7 +85,7 @@ class MemoryParams(Params):
 
         if self.memory_type == "shared":
             if self.agent_type == "dqn":
-                self.memory_size = 1000000
+                self.memory_size = 50
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
 
@@ -132,10 +132,11 @@ class AgentParams(Params):
             self.evaluator_steps     = 3000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
-            self.learn_start         = 50000 # start update params after this many steps
+            #self.learn_start         = 50000 # start update params after this many steps
+            self.learn_start         = 50 # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
-            self.hist_len            = 4    # NOTE: each sample state contains this many frames
+            self.hist_len            = 1    # NOTE: each sample state contains this many frames
             self.nstep               = 1
             # dqn specifics
             self.enable_double       = True#False

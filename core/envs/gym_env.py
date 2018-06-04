@@ -47,7 +47,11 @@ class GymEnv(Env):
             self.action_high = self.env.action_space.high
 
     def _preprocess_state(self, state):
-        return state.reshape(self.state_shape) # TODO
+        state = np.array(state)
+        if len(state.shape)<3:
+            return state.reshape(self.state_shape) # TODO
+        else:
+            return np.transpose(state, (2,0,1))
 
     def _preprocess_action(self, action):
         return action.reshape(self.action_shape) # NOTE: here using action_shape instead of action_space
