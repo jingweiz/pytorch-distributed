@@ -11,20 +11,20 @@ from utils.random_process import OrnsteinUhlenbeckProcess
 
 CONFIGS = [
 # agent_type, env_type, game,                 memory_type, model_type
-[ "dqn",      "gym",    "Pong-ram-v0",        "shared",    "dqn-mlp" ], # 0
-[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 1
-#[ "dqn",      "gym",    "Pong-v0", "shared",    "dqn-cnn" ], # 1
-[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 2
+[ "dqn",      "gym",    "CartPole-v0",        "shared",    "dqn-mlp" ], # 0
+[ "dqn",      "gym",    "Pong-ram-v0",        "shared",    "dqn-mlp" ], # 1
+[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 2
+[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 3
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "aisdaim"     # "machine_id"
-        self.timestamp  = "18060205"    # "yymmdd##"
+        self.timestamp  = "18060400"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 1
+        self.config     = 2
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
@@ -75,9 +75,7 @@ class EnvParams(Params):
             # max #steps per episode
             if self.game == "Pendulum-v0":  #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
                 self.early_stop = 200
-            elif self.game == "Pong-ram-v0":
-                self.early_stop = None
-            else:
+            else:                       # for the ataris
                 self.early_stop = None
 
 
@@ -125,7 +123,7 @@ class AgentParams(Params):
             self.lr                  = 1e-4#2.5e-4/4.
             self.lr_decay            = False
             self.weight_decay        = 0.
-            self.actor_sync_freq     = 250  # sync global_model to actor's local_model every this many steps
+            self.actor_sync_freq     = 400  # sync global_model to actor's local_model every this many steps
             # logger configs
             self.logger_freq         = 15   # log every this many secs
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
@@ -140,9 +138,9 @@ class AgentParams(Params):
             self.hist_len            = 4    # NOTE: each sample state contains this many frames
             self.nstep               = 1
             # dqn specifics
-            self.enable_double       = False#True#False
-            self.eps_start           = 1
-            self.eps_end             = 0.1
+            self.enable_double       = True#False
+            self.eps                 = 0.4
+            self.eps_alpha           = 7
             self.action_repetition   = 4
         elif self.agent_type == "ddpg":
             # criteria and optimizer
@@ -156,7 +154,7 @@ class AgentParams(Params):
             self.lr                  = 1e-4
             self.lr_decay            = False
             self.weight_decay        = 0.
-            self.actor_sync_freq     = 250  # sync global_model to actor's local_model every this many steps
+            self.actor_sync_freq     = 400  # sync global_model to actor's local_model every this many steps
             # logger configs
             self.logger_freq         = 15   # log every this many secs
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps

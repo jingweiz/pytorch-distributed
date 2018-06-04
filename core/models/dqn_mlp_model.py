@@ -12,15 +12,17 @@ class DQNMlpModel(Model):
 
         # model_params for this model
 
+        self.hidden_dims = 256#16
+
         # critic
         self.critic = nn.Sequential(
-            nn.Linear(self.input_dims[0] * self.input_dims[1] * self.input_dims[2], 256),
+            nn.Linear(self.input_dims[0] * self.input_dims[1] * self.input_dims[2], self.hidden_dims),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(self.hidden_dims, self.hidden_dims),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(self.hidden_dims, self.hidden_dims),
             nn.ReLU(),
-            nn.Linear(256, self.output_dims),
+            nn.Linear(self.hidden_dims, self.output_dims),
         )
 
         # reset
