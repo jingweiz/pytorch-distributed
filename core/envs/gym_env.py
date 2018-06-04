@@ -59,12 +59,12 @@ class GymEnv(Env):
     @property
     def state_shape(self):  # NOTE: here returns the shape after preprocessing, i.e., the shape that gets passed out that's pushed into memory
         if len(self.env.observation_space.shape) < 2:
-            # return [self.state_cha, self.state_hei, self.env.observation_space.shape[0]]
-            return [self.state_hei, self.env.observation_space.shape[0]]
+            return [self.state_cha, self.state_hei, self.env.observation_space.shape[0]]
+            # return [self.state_hei, self.env.observation_space.shape[0]]
         else:
             # return self.env.observation_space.shape
-            # return [self.state_cha, self.state_hei, self.state_wid]
-            return [self.state_hei, self.state_wid]
+            return [self.state_cha, self.state_hei, self.state_wid]
+            # return [self.state_hei, self.state_wid]
 
     @property
     def action_shape(self):

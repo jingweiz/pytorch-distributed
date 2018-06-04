@@ -40,8 +40,6 @@ def tester(process_ind, args,
     nepisodes_solved = 0
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
-    # local buffers for hist_len && nstep
-    state1_stacked = deque(maxlen=args.agent_params.hist_len)
     while nepisodes < args.agent_params.tester_nepisodes:
         print(nepisodes)
         # deal w/ reset
@@ -52,19 +50,12 @@ def tester(process_ind, args,
             # reset game
             experience = env.reset()
             assert experience.state1 is not None
-            # local buffers for hist_len && nstep
-            state1_stacked.clear()
-            for i in range(args.agent_params.hist_len):
-                state1_stacked.append(experience.state1)
             # flags
             flag_reset = False
 
         # run a single step
-        action = local_model.get_action(np.array(list(state1_stacked)))
+        action = local_model.get_action(experience.state1)
         experience = env.step(action)
-
-        # special treatments for hist_len && nstep
-        state1_stacked.append(experience.state1)
 
         # check conditions & update flags
         if experience.terminal1:

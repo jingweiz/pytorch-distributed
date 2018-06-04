@@ -47,8 +47,7 @@ def ddpg_actor(process_ind, args,
     nepisodes_solved = 0
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
-    # local buffers for hist_len && nstep
-    state1_stacked   = deque(maxlen=args.agent_params.hist_len)
+    # local buffers for nstep
     states_nstep     = deque(maxlen=args.agent_params.nstep + 1)
     actions_nstep    = deque(maxlen=args.agent_params.nstep)
     rewards_nstep    = deque(maxlen=args.agent_params.nstep)
@@ -62,12 +61,9 @@ def ddpg_actor(process_ind, args,
             # reset game
             experience = env.reset()
             assert experience.state1 is not None
-            # local buffers for hist_len && nstep
-            state1_stacked.clear()
-            for i in range(args.agent_params.hist_len):
-                state1_stacked.append(experience.state1)
+            # local buffers for nstep
             states_nstep.clear()
-            states_nstep.append(np.array(list((state1_stacked))))
+            states_nstep.append(experience.state1)
             actions_nstep.clear()
             rewards_nstep.clear()
             terminal1s_nstep.clear()
@@ -75,12 +71,11 @@ def ddpg_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        action = local_model.get_action(np.array(list(state1_stacked)), random_process.sample()) # NOTE: first converting to list is faster than directly to array
+        action = local_model.get_action(experience.state1, random_process.sample())
         experience = env.step(action)
 
-        # special treatments for hist_len && nstep before push to memory
-        state1_stacked.append(experience.state1)
-        states_nstep.append(np.array(list((state1_stacked))))
+        # local buffers for nstep
+        states_nstep.append(experience.state1)
         actions_nstep.append(experience.action)
         rewards_nstep.append(experience.reward)
         terminal1s_nstep.append(experience.terminal1)

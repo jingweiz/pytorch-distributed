@@ -29,8 +29,8 @@ if __name__ == '__main__':
     opt.terminal_shape = opt.agent_params.num_tasks
     del dummy_env
 
-    # NOTE: support for hist_len > 1
-    opt.state_shape.insert(0, opt.agent_params.hist_len)
+    # # NOTE: support for hist_len > 1
+    # opt.state_shape.insert(0, opt.agent_params.hist_len)
 
     processes = []
     if opt.mode == 1:

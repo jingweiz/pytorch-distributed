@@ -64,19 +64,18 @@ class EnvParams(Params):
             self.state_hei = 1          # NOTE: always 1 for mlp's
             self.state_wid = None       # depends on the env
         elif "cnn" in self.model_type:  # raw image inputs, need to resize or crop to this step_size
-            self.state_cha = 1          # NOTE: equals hist_len
+            self.state_cha = 4          # NOTE: equals hist_len
             self.state_hei = 42
             self.state_wid = 42
-        assert self.state_cha == 1      # NOTE: to ease storing into memory
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
 
             # max #steps per episode
             if self.game == "Pendulum-v0":  #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
-                self.early_stop = 200
+                self.early_stop = None#200
             else:                       # for the ataris
-                self.early_stop = None
+                self.early_stop = 12500
 
 
 class MemoryParams(Params):
@@ -85,7 +84,7 @@ class MemoryParams(Params):
 
         if self.memory_type == "shared":
             if self.agent_type == "dqn":
-                self.memory_size = 50
+                self.memory_size = 100000
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
 
@@ -132,11 +131,9 @@ class AgentParams(Params):
             self.evaluator_steps     = 3000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
-            #self.learn_start         = 50000 # start update params after this many steps
-            self.learn_start         = 50 # start update params after this many steps
+            self.learn_start         = 5000 # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
-            self.hist_len            = 1    # NOTE: each sample state contains this many frames
             self.nstep               = 1
             # dqn specifics
             self.enable_double       = True#False
@@ -163,10 +160,9 @@ class AgentParams(Params):
             self.evaluator_steps     = 1000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
-            self.learn_start         = 200  # start update params after this many steps
+            self.learn_start         = 250  # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
-            self.hist_len            = 1    # NOTE: each sample state contains this many frames
             self.nstep               = 5    # NOTE: this many steps lookahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
