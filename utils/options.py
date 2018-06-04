@@ -21,10 +21,11 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "pearl3"      # "machine_id"
-        self.timestamp  = "18060400"    # "yymmdd##"
+        self.timestamp  = "18060401"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 2
+        self.gpu_ind    = 1             # learner will be using device('cuda:gpu_ind')
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
@@ -33,7 +34,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 8 
+        self.num_actors = 8
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -136,7 +137,7 @@ class AgentParams(Params):
             self.target_model_update = 1e-3
             self.nstep               = 1
             # dqn specifics
-            self.enable_double       = True#False
+            self.enable_double       = False#True#False
             self.eps                 = 0.4
             self.eps_alpha           = 7
         elif self.agent_type == "ddpg":

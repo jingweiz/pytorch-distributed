@@ -17,7 +17,7 @@ def dqn_learner(process_ind, args,
     # env
     # memory
     # model
-    local_device = torch.device('cuda') # TODO: should assign each learner to a seperate gpu
+    local_device = torch.device('cuda:' + str(args.gpu_ind))
     global_device = torch.device('cpu')
     local_model = model_prototype(args.model_params,
                                   args.state_shape,
