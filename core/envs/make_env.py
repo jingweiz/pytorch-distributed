@@ -66,6 +66,6 @@ def make_env(env_id, seed, rank, log_dir):
         #if log_dir is not None:
             #env = bench.Monitor(env, os.path.join(log_dir, str(rank)))
         if is_atari:
-            env = wrap_deepmind(env, frame_stack=True)
+            env = wrap_deepmind(env, frame_stack=False)
         return env
     return _thunk
