@@ -20,7 +20,7 @@ CONFIGS = [
 class Params(object):
     def __init__(self):
         # training signature
-        self.machine    = "aisdaim"     # "machine_id"
+        self.machine    = "pearl3"      # "machine_id"
         self.timestamp  = "18060400"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
@@ -33,7 +33,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 2
+        self.num_actors = 8 
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
