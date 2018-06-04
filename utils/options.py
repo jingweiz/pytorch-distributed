@@ -13,6 +13,7 @@ CONFIGS = [
 # agent_type, env_type, game,                 memory_type, model_type
 [ "dqn",      "gym",    "Pong-ram-v0",        "shared",    "dqn-mlp" ], # 0
 [ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 1
+#[ "dqn",      "gym",    "Pong-v0", "shared",    "dqn-cnn" ], # 1
 [ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 2
 ]
 
@@ -23,7 +24,7 @@ class Params(object):
         self.timestamp  = "18060205"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 0
+        self.config     = 1
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
