@@ -75,18 +75,13 @@ def dqn_actor(process_ind, args,
 
         # run a single step
         action = local_model.get_action(np.array(list(state1_stacked)), eps) # NOTE: first converting to list is faster than directly to array
-        reward = 0.
-        for _ in range(args.agent_params.action_repetition):
-            experience = env.step(action)
-            reward += experience.reward
-            if experience.terminal1:
-                break
+        experience = env.step(action)
 
         # special treatments for hist_len && nstep before push to memory
         state1_stacked.append(experience.state1)
         states_nstep.append(np.array(list((state1_stacked))))
         actions_nstep.append(experience.action)
-        rewards_nstep.append(reward)
+        rewards_nstep.append(experience.reward)
         terminal1s_nstep.append(experience.terminal1)
 
         # push to memory
@@ -109,7 +104,7 @@ def dqn_actor(process_ind, args,
             global_logs.actor_step.value += 1
         step += 1
         episode_steps += 1
-        episode_reward += reward
+        episode_reward += experience.reward
         if flag_reset:
             nepisodes += 1
             total_steps += episode_steps

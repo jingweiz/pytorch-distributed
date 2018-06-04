@@ -142,7 +142,6 @@ class AgentParams(Params):
             self.enable_double       = True#False
             self.eps                 = 0.4
             self.eps_alpha           = 7
-            self.action_repetition   = 4
         elif self.agent_type == "ddpg":
             # criteria and optimizer
             self.value_criteria = nn.MSELoss()
@@ -171,7 +170,6 @@ class AgentParams(Params):
             self.nstep               = 5    # NOTE: this many steps lookahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
-            self.action_repetition   = 1    # NOTE: just to use the same evaluator & tester as dqn
 
 
 class Options(Params):
