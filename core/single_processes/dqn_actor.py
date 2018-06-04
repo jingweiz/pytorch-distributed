@@ -28,7 +28,7 @@ def dqn_actor(process_ind, args,
     local_model.load_state_dict(global_model.state_dict())
 
     # params
-    eps_decay = args.memory_params.memory_size
+    eps = args.agent_params.eps ** (1. + (process_ind-1)/(args.num_actors-1) * args.agent_params.eps_alpha)
 
     # setup
     local_model.eval()
@@ -74,7 +74,6 @@ def dqn_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        eps = args.agent_params.eps_end + max(0, (args.agent_params.eps_start - args.agent_params.eps_end) * (eps_decay - max(0, step - args.agent_params.learn_start)) / eps_decay)
         action = local_model.get_action(np.array(list(state1_stacked)), eps) # NOTE: first converting to list is faster than directly to array
         reward = 0.
         for _ in range(args.agent_params.action_repetition):
