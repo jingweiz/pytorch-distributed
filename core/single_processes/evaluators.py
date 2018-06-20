@@ -34,6 +34,7 @@ def evaluator(process_ind, args,
 
     last_eval_time = time.time()
     while global_logs.learner_step.value < args.agent_params.steps:
+        time.sleep(0.1)
         if time.time() - last_eval_time > args.agent_params.evaluator_freq:
             # sync global model to local
             local_model.load_state_dict(global_model.state_dict())
