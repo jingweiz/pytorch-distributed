@@ -54,7 +54,7 @@ def tester(process_ind, args,
             flag_reset = False
 
         # run a single step
-        action = local_model.get_action(experience.state1)
+        action, _, _ = local_model.get_action(experience.state1)
         experience = env.step(action)
 
         # check conditions & update flags

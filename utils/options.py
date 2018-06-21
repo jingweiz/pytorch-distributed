@@ -89,8 +89,8 @@ class MemoryParams(Params):
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
 
-            self.enable_prioritized = True      # TODO: tbi
-            if self.enable_prioritized:
+            self.enable_per = True              # prioritized experience replay
+            if self.enable_per:
                 self.priority_exponent = 0.5    # TODO: rainbow: 0.5, distributed: 0.6
                 self.priority_weight = 0.4
 
