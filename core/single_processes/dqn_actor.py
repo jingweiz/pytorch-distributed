@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from collections import deque
 import torch
@@ -28,7 +29,10 @@ def dqn_actor(process_ind, args,
     local_model.load_state_dict(global_model.state_dict())
 
     # params
-    eps = args.agent_params.eps ** (1. + (process_ind-1)/(args.num_actors-1) * args.agent_params.eps_alpha)
+    if args.num_actors <= 1:    # NOTE: should avoid this situation, here just for debugging
+        eps = 0.1
+    else:                       # as described in top of Pg.6
+        eps = args.agent_params.eps ** (1. + (process_ind-1)/(args.num_actors-1) * args.agent_params.eps_alpha)
 
     # setup
     local_model.eval()
