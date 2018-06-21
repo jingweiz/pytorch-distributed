@@ -96,7 +96,7 @@ def dqn_actor(process_ind, args,
         gamma_sn = np.power(args.agent_params.gamma, len(states_nstep)-1)
         priority = 0.
         if args.memory_params.enable_per:   # then use tderr as the initial priority
-            priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[0] - qvalues_nstep[-1])
+            priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[0] - qvalues_nstep[-1]) # TODO: currently wrong
         global_memory.feed((states_nstep[-1],
                             actions_nstep[-1],
                             [rewards_between],
