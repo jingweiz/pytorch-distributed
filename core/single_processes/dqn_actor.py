@@ -80,34 +80,23 @@ def dqn_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1)#eps)
+        action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps)
         experience = env.step(action)
 
         # local buffers for nstep
         states_nstep.append(experience.state1)
         actions_nstep.append(experience.action)
-        rewards_nstep.append(len(states_nstep))#experience.reward)
+        rewards_nstep.append(experience.reward)
         terminal1s_nstep.append(experience.terminal1)
         qvalues_nstep.append(qvalue)
         max_qvalues_nstep.append(max_qvalue)
 
-        print("------------------->")
-        print("=====>", experience.state1.mean(), len(states_nstep), experience.terminal1, experience.action)
-        for i in range(len(actions_nstep)):
-            if i == (len(actions_nstep)-1):
-                print("=====>", states_nstep[i+1].mean(), states_nstep[i].mean(), rewards_nstep[i], terminal1s_nstep[i], actions_nstep[i])
-            else:
-                print("----->", states_nstep[i+1].mean(), states_nstep[i].mean(), rewards_nstep[i], terminal1s_nstep[i], actions_nstep[i])
-        rr = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, len(rewards_nstep)-1-i) for i in range(len(rewards_nstep))])
-        print("the current reward is --->", rr)
-        time.sleep(3)
         # push to memory
         rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, len(rewards_nstep)-1-i) for i in range(len(rewards_nstep))])
         gamma_sn = np.power(args.agent_params.gamma, len(states_nstep)-1)
         priority = 0.
         if args.memory_params.enable_per:   # then use tderr as the initial priority
             priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[0] - qvalues_nstep[-1])
-            print(priority)
         global_memory.feed((states_nstep[-1],
                             actions_nstep[-1],
                             [rewards_between],
