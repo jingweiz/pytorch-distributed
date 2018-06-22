@@ -84,9 +84,9 @@ def dqn_actor(process_ind, args,
         action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps)
         # action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1.)#eps)
         experience = env.step(action)
-        experience.state1.fill(len(states_nstep))
-        qvalue = len(states_nstep)-1
-        max_qvalue = len(states_nstep)-1
+        # experience.state1.fill(len(states_nstep))
+        # qvalue = len(states_nstep)-1
+        # max_qvalue = len(states_nstep)-1
 
         # local buffers for nstep
         states_nstep.append(experience.state1)
