@@ -21,11 +21,11 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "pearl3"      # "machine_id"
-        self.timestamp  = "18060401"    # "yymmdd##"
+        self.timestamp  = "18061900"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 2
-        self.gpu_ind    = 1             # learner will be using device('cuda:gpu_ind')
+        self.gpu_ind    = 0             # learner will be using device('cuda:gpu_ind')
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
 
@@ -89,10 +89,10 @@ class MemoryParams(Params):
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
 
-            self.enable_prioritized = False     # TODO: tbi
-            if self.enable_prioritized:
-                self.priority_exponent = 0.5    # TODO: taken from rainbow, check for distributed
-                self.priority_weight = 0.4      # TODO: taken from rainbow, check for distributed
+            self.enable_per = True              # prioritized experience replay
+            if self.enable_per:
+                self.priority_exponent = 0.5    # TODO: rainbow: 0.5, distributed: 0.6
+                self.priority_weight = 0.4
 
 
 class ModelParams(Params):

@@ -38,7 +38,7 @@ class SharedMemory(Memory):
             return self.memory_size
         return self.pos.value
 
-    def _feed(self, experience):
+    def _feed(self, experience, priority=0.):
         state0, action, reward, gamma1, state1, terminal1 = experience
 
         self.state0s[self.pos.value][:] = torch.FloatTensor(state0)
@@ -62,9 +62,9 @@ class SharedMemory(Memory):
                 self.state1s[batch_inds],
                 self.terminal1s[batch_inds])
 
-    def feed(self, experience):
+    def feed(self, experience, priority=0.):
         with self.memory_lock:
-            return self._feed(experience)
+            return self._feed(experience, priority)
 
     def sample(self, batch_size):
         with self.memory_lock:
