@@ -17,7 +17,7 @@ def dqn_logger(process_ind, args,
     # start logging
     last_log_time = time.time()
     while global_loggers.learner_step.value < args.agent_params.steps:
-        time.sleep(0.1)
+        time.sleep(5)
         if evaluator_loggers.logger_lock.value:
             current_learner_step = global_loggers.learner_step.value
             with evaluator_loggers.logger_lock.get_lock():
