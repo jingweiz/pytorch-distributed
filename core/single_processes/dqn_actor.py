@@ -51,13 +51,13 @@ def dqn_actor(process_ind, args,
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     # local buffers for nstep
-    states_nstep     = deque(maxlen=args.agent_params.nstep + 1)
-    actions_nstep    = deque(maxlen=args.agent_params.nstep)
-    rewards_nstep    = deque(maxlen=args.agent_params.nstep)
-    terminal1s_nstep = deque(maxlen=args.agent_params.nstep)
+    states_nstep     = deque(maxlen=args.agent_params.nstep + 2)
+    actions_nstep    = deque(maxlen=args.agent_params.nstep + 1)
+    rewards_nstep    = deque(maxlen=args.agent_params.nstep + 1)
+    terminal1s_nstep = deque(maxlen=args.agent_params.nstep + 1)
     if args.memory_params.enable_per:
-        qvalues_nstep = deque(maxlen=args.agent_params.nstep)       # for calculating the initial priority
-        max_qvalues_nstep = deque(maxlen=args.agent_params.nstep)   # for calculating the initial priority
+        qvalues_nstep = deque(maxlen=args.agent_params.nstep + 1)       # for calculating the initial priority
+        max_qvalues_nstep = deque(maxlen=args.agent_params.nstep + 1)   # for calculating the initial priority
     while global_logs.learner_step.value < args.agent_params.steps:
         # deal w/ reset
         if flag_reset:
@@ -66,6 +66,7 @@ def dqn_actor(process_ind, args,
             episode_reward = 0.
             # reset game
             experience = env.reset()
+            experience.state1.fill(len(states_nstep))
             assert experience.state1 is not None
             # local buffers for nstep
             states_nstep.clear()
@@ -81,52 +82,130 @@ def dqn_actor(process_ind, args,
 
         # run a single step
         action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps)
-        # action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1)#eps)
+        # action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1.)#eps)
         experience = env.step(action)
+        experience.state1.fill(len(states_nstep))
+        qvalue = len(states_nstep)-1
+        max_qvalue = len(states_nstep)-1
 
         # local buffers for nstep
         states_nstep.append(experience.state1)
         actions_nstep.append(experience.action)
         rewards_nstep.append(experience.reward)
-        # rewards_nstep.append(len(states_nstep))#experience.reward)
+        # rewards_nstep.append(len(states_nstep)-1)#experience.reward)
         terminal1s_nstep.append(experience.terminal1)
         qvalues_nstep.append(qvalue)
         max_qvalues_nstep.append(max_qvalue)
 
-        # print("------------------->")
-        # print("=====>", experience.state1.mean(), len(states_nstep), experience.terminal1, experience.action)
-        # for i in range(len(actions_nstep)):
-        #     if i == (len(actions_nstep)-1):
-        #         print("=====>", i, states_nstep[i+1].mean(), states_nstep[i].mean(), rewards_nstep[i], terminal1s_nstep[i], actions_nstep[i])
-        #     else:
-        #         print("----->", i, states_nstep[i+1].mean(), states_nstep[i].mean(), rewards_nstep[i], terminal1s_nstep[i], actions_nstep[i])
-        # # rr = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, len(rewards_nstep)-1-i) for i in range(len(rewards_nstep))])
-        # rr = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])
-        # print("the current reward is --->", rr)
-        # time.sleep(3)
+        # print("--------------------------------->")
+        # print("last exp     =====>", experience.state1.mean(), len(states_nstep), qvalue, max_qvalue)
+        # print("states_nstep ----->", )
+        # for i in range(len(states_nstep)):
+        #     print(i, states_nstep[i].mean())
+        # print("rewards_nstep ----->", )
+        # for i in range(len(rewards_nstep)):
+        #     print(i, rewards_nstep[i])
+        # print("qvalues_nstep ----->", )
+        # for i in range(len(qvalues_nstep)):
+        #     print(i, qvalues_nstep[i])
+        # print("max_qvalues_nstep ----->", )
+        # for i in range(len(max_qvalues_nstep)):
+        #     print(i, max_qvalues_nstep[i])
+
         # push to memory
-        rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])
-        gamma_sn = np.power(args.agent_params.gamma, len(states_nstep)-1)
-        priority = 0.
-        if args.memory_params.enable_per:   # then use tderr as the initial priority
-            priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[-1] - qvalues_nstep[0]) # TODO: currently still one step off
-            # print(priority)
-        global_memory.feed((states_nstep[0],
-                            actions_nstep[0],
-                            [rewards_between],
-                            [gamma_sn],
-                            states_nstep[-1],
-                            terminal1s_nstep[0]),
-                            priority)
+        # NOTE: now states_nstep[-1] has not yet been passed through the model
+        # NOTE: so its qvalue & max_qvalue are not yet available for calculating the tderr for priority
+        # NOTE: so here we only push the second most recent tuple [-2] into the memory
+        # NOTE: and do an extra forward of [-1] only when the current episode terminates
+        # NOTE: then push the most recent tuple into memory
+        # read as: from state0, take action0, accumulate rewards_between in n step, arrive at stateN, results in terminalN
+        # state0: states_nstep[0]
+        # action0: actions_nstep[0]
+        # rewards_between: discounted sum over rewards_nstep[0] ~ rewards_nstep[-2]-
+        # stateN: states_nstep[-2]
+        # terminalN: terminal1s_nstep[-2]
+        # qvalue0: qvalues_nstep[0]
+        # max_qvalueN: max_qvalues_nstep[-1] # NOTE: this stores the value for states_nstep[-2]
+        if len(states_nstep) >= 3:
+            rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep) - 1)])
+            gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 2)
+            priority = 0.
+            if args.memory_params.enable_per:   # then use tderr as the initial priority
+                priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[-1] - qvalues_nstep[0])
+            # print("      feeding =====>", )
+            # print("s0 --->", states_nstep[0].mean())
+            # print("sn --->", states_nstep[-2].mean())
+            # print("r  --->", rewards_between)
+            # print("gn --->", gamma_sn)
+            # print("q0 --->", qvalues_nstep[0])
+            # print("qn*--->", max_qvalues_nstep[-1])
+            # print("pr --->", priority)
+            # time.sleep(3)
+            global_memory.feed((states_nstep[0],
+                                actions_nstep[0],
+                                [rewards_between],
+                                [gamma_sn],
+                                states_nstep[-2],
+                                terminal1s_nstep[-2]),
+                                priority)
 
         # check conditions & update flags
         if experience.terminal1:
-            # TODO: if terminal, need to forward the latest state, and push the last tuple into memory
-            # TODO: add here the extra feeding step
             nepisodes_solved += 1
             flag_reset = True
         if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
             flag_reset = True
+
+        # NOTE: now we do the extra forward step of the most recent state
+        # NOTE: then push the tuple into memory, if the current episode ends
+        if flag_reset:
+            # do an extra forward step of the most recent state [-1]
+            # _, qvalue, max_qvalue = local_model.get_action(states_nstep[-1], args.memory_params.enable_per, eps)
+            _, _, max_qvalue = local_model.get_action(states_nstep[-1], args.memory_params.enable_per, 1.)#eps)
+            if len(states_nstep) >= (args.agent_params.nstep + 2):    # (nstep+1) experiences available, use states_nstep[1] as s0
+                rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i - 1) for i in range(1, len(rewards_nstep))])
+                gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 2)
+                priority = 0.
+                if args.memory_params.enable_per:   # then use tderr as the initial priority
+                    priority = abs(rewards_between + gamma_sn * max_qvalue - qvalues_nstep[1])
+                # print("      feeding =====> extra full", )
+                # print("s0 --->", states_nstep[1].mean())
+                # print("sn --->", states_nstep[-1].mean())
+                # print("rr --->", rewards_between)
+                # print("ga --->", gamma_sn)
+                # print("q0 --->", qvalues_nstep[1])
+                # print("qn*--->", max_qvalue)
+                # print("pr --->", priority)
+                # time.sleep(3)
+                global_memory.feed((states_nstep[1],
+                                    actions_nstep[1],
+                                    [rewards_between],
+                                    [gamma_sn],
+                                    states_nstep[-1],
+                                    terminal1s_nstep[-1]),
+                                    priority)
+            else:                                   # not all available, just use the oldest states_nstep[0] as s0
+                rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])
+                gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 1)
+                priority = 0.
+                if args.memory_params.enable_per:   # then use tderr as the initial priority
+                    priority = abs(rewards_between + gamma_sn * max_qvalue - qvalues_nstep[0])
+                # print("      feeding =====> extra parts", )
+                # print("s0 --->", states_nstep[0].mean())
+                # print("sn --->", states_nstep[-1].mean())
+                # print("rr --->", rewards_between)
+                # print("ga --->", gamma_sn)
+                # print("q0 --->", qvalues_nstep[0])
+                # print("qn*--->", max_qvalue)
+                # print("pr --->", priority)
+                # time.sleep(3)
+                global_memory.feed((states_nstep[0],
+                                    actions_nstep[0],
+                                    [rewards_between],
+                                    [gamma_sn],
+                                    states_nstep[-1],
+                                    terminal1s_nstep[-1]),
+                                    priority)
 
         # update counters & stats
         with global_logs.actor_step.get_lock():
