@@ -30,7 +30,7 @@ class GymEnv(Env):
         # print("env config ---------->", str(process_ind), str(num_envs_per_process))
         # for i in range(self.num_envs_per_process):
             # print("env seed --->", str(args.seed + self.process_ind*self.num_envs_per_actor + i))
-        envs = [make_env(args.game, args.seed, self.process_ind*self.num_envs_per_actor+i, self.gym_log_dir)
+        envs = [make_env(args, self.process_ind*self.num_envs_per_actor+i)
                 for i in range(self.num_envs_per_process)]
 
         if self.num_envs_per_process > 1:
