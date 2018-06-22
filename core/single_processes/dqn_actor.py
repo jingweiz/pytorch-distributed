@@ -81,22 +81,36 @@ def dqn_actor(process_ind, args,
 
         # run a single step
         action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps)
+        # action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1)#eps)
         experience = env.step(action)
 
         # local buffers for nstep
         states_nstep.append(experience.state1)
         actions_nstep.append(experience.action)
         rewards_nstep.append(experience.reward)
+        # rewards_nstep.append(len(states_nstep))#experience.reward)
         terminal1s_nstep.append(experience.terminal1)
         qvalues_nstep.append(qvalue)
         max_qvalues_nstep.append(max_qvalue)
 
+        # print("------------------->")
+        # print("=====>", experience.state1.mean(), len(states_nstep), experience.terminal1, experience.action)
+        # for i in range(len(actions_nstep)):
+        #     if i == (len(actions_nstep)-1):
+        #         print("=====>", i, states_nstep[i+1].mean(), states_nstep[i].mean(), rewards_nstep[i], terminal1s_nstep[i], actions_nstep[i])
+        #     else:
+        #         print("----->", i, states_nstep[i+1].mean(), states_nstep[i].mean(), rewards_nstep[i], terminal1s_nstep[i], actions_nstep[i])
+        # # rr = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, len(rewards_nstep)-1-i) for i in range(len(rewards_nstep))])
+        # rr = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])
+        # print("the current reward is --->", rr)
+        # time.sleep(3)
         # push to memory
-        rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, len(rewards_nstep)-1-i) for i in range(len(rewards_nstep))])
+        rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])
         gamma_sn = np.power(args.agent_params.gamma, len(states_nstep)-1)
         priority = 0.
         if args.memory_params.enable_per:   # then use tderr as the initial priority
-            priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[0] - qvalues_nstep[-1]) # TODO: currently wrong
+            priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[-1] - qvalues_nstep[0]) # TODO: currently still one step off
+            # print(priority)
         global_memory.feed((states_nstep[-1],
                             actions_nstep[-1],
                             [rewards_between],
@@ -108,6 +122,7 @@ def dqn_actor(process_ind, args,
         # check conditions & update flags
         if experience.terminal1:
             # TODO: if terminal, need to forward the latest state, and push the last tuple into memory
+            # TODO: add here the extra feeding step
             nepisodes_solved += 1
             flag_reset = True
         if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
