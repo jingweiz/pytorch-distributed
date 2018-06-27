@@ -86,11 +86,11 @@ class MemoryParams(Params):
 
         if self.memory_type == "shared":
             if self.agent_type == "dqn":
-                self.memory_size = 100000
+                self.memory_size = 50000
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
 
-            self.enable_per = True              # prioritized experience replay
+            self.enable_per = False              # prioritized experience replay
             if self.enable_per:
                 self.priority_exponent = 0.5    # TODO: rainbow: 0.5, distributed: 0.6
                 self.priority_weight = 0.4
@@ -128,14 +128,14 @@ class AgentParams(Params):
             # logger configs
             self.logger_freq         = 15   # log every this many secs
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
-            self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
-            self.evaluator_freq      = 60   # eval every this many secs
-            self.evaluator_steps     = 3000 # eval for this many steps
+            self.learner_freq        = 100 # push & reset local learner stats every this many learner steps
+            self.evaluator_freq      = 30   # eval every this many secs
+            self.evaluator_steps     = 1000 # eval for this many steps
             self.tester_nepisodes    = 50
             # off-policy specifics
             self.learn_start         = 5000 # start update params after this many steps
             self.batch_size          = 128
-            self.target_model_update =250
+            self.target_model_update = 250
             self.nstep               = 1
             # dqn specifics
             self.enable_double       = False#True#False
