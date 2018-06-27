@@ -14,17 +14,18 @@ CONFIGS = [
 [ "dqn",      "gym",    "CartPole-v0",        "shared",    "dqn-mlp" ], # 0
 [ "dqn",      "gym",    "Pong-ram-v0",        "shared",    "dqn-mlp" ], # 1
 [ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 2
-[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 3
+[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn-ptan" ], # 3
+[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 4
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
-        self.machine    = "pearl3"      # "machine_id"
-        self.timestamp  = "18061900"    # "yymmdd##"
+        self.machine    = "hpcgpu9"      # "machine_id"
+        self.timestamp  = "none"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 2
+        self.config     = 3
         self.gpu_ind    = 0             # learner will be using device('cuda:gpu_ind')
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
@@ -34,7 +35,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 8
+        self.num_actors = 2
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -66,8 +67,8 @@ class EnvParams(Params):
             self.state_wid = None       # depends on the env
         elif "cnn" in self.model_type:  # raw image inputs, need to resize or crop to this step_size
             self.state_cha = 4          # NOTE: equals hist_len
-            self.state_hei = 42
-            self.state_wid = 42
+            self.state_hei = 84
+            self.state_wid = 84
 
         if self.env_type == "gym":
             self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
@@ -123,7 +124,7 @@ class AgentParams(Params):
             self.lr                  = 1e-4#2.5e-4/4.
             self.lr_decay            = False
             self.weight_decay        = 0.
-            self.actor_sync_freq     = 400  # sync global_model to actor's local_model every this many steps
+            self.actor_sync_freq     = 100  # sync global_model to actor's local_model every this many steps
             # logger configs
             self.logger_freq         = 15   # log every this many secs
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
@@ -133,8 +134,8 @@ class AgentParams(Params):
             self.tester_nepisodes    = 50
             # off-policy specifics
             self.learn_start         = 5000 # start update params after this many steps
-            self.batch_size          = 64
-            self.target_model_update = 1e-3
+            self.batch_size          = 128
+            self.target_model_update =250
             self.nstep               = 1
             # dqn specifics
             self.enable_double       = False#True#False
