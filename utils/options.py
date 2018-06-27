@@ -91,6 +91,15 @@ class MemoryParams(Params):
                 self.memory_size = 50000
 
             self.enable_per = False              # prioritized experience replay
+            # dtype for states
+            if "mlp" in self.model_type:
+                # self.dtype = torch.float32    # TODO: somehow passing in dtype causes error in mp
+                self.tensortype = torch.FloatTensor
+            elif "cnn" in self.model_type:      # save image as byte to save space
+                # self.dtype = torch.uint8      # TODO: somehow passing in dtype causes error in mp
+                self.tensortype = torch.ByteTensor
+
+            self.enable_per = False              # prioritized experience replay
             if self.enable_per:
                 self.priority_exponent = 0.5    # TODO: rainbow: 0.5, distributed: 0.6
                 self.priority_weight = 0.4

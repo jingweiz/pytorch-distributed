@@ -94,8 +94,9 @@ def dqn_actor(process_ind, args,
         rewards_nstep.append(experience.reward)
         # rewards_nstep.append(len(states_nstep)-1)#experience.reward)
         terminal1s_nstep.append(experience.terminal1)
-        qvalues_nstep.append(qvalue)
-        max_qvalues_nstep.append(max_qvalue)
+        if args.memory_params.enable_per:
+            qvalues_nstep.append(qvalue)
+            max_qvalues_nstep.append(max_qvalue)
 
         # print("--------------------------------->")
         # print("last exp     =====>", experience.state1.mean(), len(states_nstep), qvalue, max_qvalue)

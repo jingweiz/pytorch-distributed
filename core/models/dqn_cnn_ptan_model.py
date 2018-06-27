@@ -57,14 +57,25 @@ class DQNPtanModel(Model):
         qvalue = self.critic[1](self.critic[0](input/255.0).view(input.size(0), -1))
         return qvalue
 
-    def get_action(self, input, eps=0.):
+    def get_action(self, input, enable_per=False, eps=0.):
+        forward_flag = True
+        action, qvalue, max_qvalue = None, None, None
         input = torch.FloatTensor(input).unsqueeze(0)
         if eps > 0. and np.random.uniform() < eps: # then we choose a random action
             action = np.random.randint(self.output_dims,
                                        size=(input.size(0),
                                              self.action_dims))
-        else:
-            qvalue = self.forward(input)
-            _, action = qvalue.max(dim=1, keepdim=True)
-            action = action.cpu().numpy()
-        return action
+            if not enable_per:
+                forward_flag = False
+        if forward_flag:
+            qvalues = self.forward(input)
+            max_qvalue, max_action = qvalues.max(dim=1, keepdim=True)
+            max_qvalue = max_qvalue.item()
+            max_action = max_action.item()
+            if action is None:
+                qvalue, action = max_qvalue, max_action
+                action = np.array([[action]])
+            elif enable_per:
+                qvalue = qvalues[0][action[0][0]].teim()
+        return action, qvalue, max_qvalue
+            

@@ -2,10 +2,9 @@ import numpy as np
 import torch.multiprocessing as mp
 
 class Memory(object):
-    def __init__(self, args, dtype=np.float32):
-        self.dtype = dtype
+    def __init__(self, args):
 
-        # # params
+        # params
         self.state_shape = args.state_shape
         self.action_shape = args.action_shape
         self.reward_shape = args.reward_shape       # num_tasks
@@ -14,6 +13,7 @@ class Memory(object):
 
         # memory_params
         self.memory_size = args.memory_size
+        self.tensortype = args.tensortype           # for states
 
         # setup
         self.pos = 0
