@@ -21,7 +21,7 @@ class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "pearl3"      # "machine_id"
-        self.timestamp  = "18061900"    # "yymmdd##"
+        self.timestamp  = "18062600"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 2
@@ -88,6 +88,14 @@ class MemoryParams(Params):
                 self.memory_size = 100000
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
+
+            # dtype for states
+            if "mlp" in self.model_type:
+                # self.dtype = torch.float32    # TODO: somehow passing in dtype causes error in mp
+                self.tensortype = torch.FloatTensor
+            elif "cnn" in self.model_type:      # save image as byte to save space
+                # self.dtype = torch.uint8      # TODO: somehow passing in dtype causes error in mp
+                self.tensortype = torch.ByteTensor
 
             self.enable_per = True              # prioritized experience replay
             if self.enable_per:
