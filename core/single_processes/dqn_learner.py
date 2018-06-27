@@ -42,7 +42,6 @@ def dqn_learner(process_ind, args,
     # main control loop
     step = 0
     while global_logs.learner_step.value < args.agent_params.steps:
-        time.sleep(0.01)
         if global_memory.size > args.agent_params.learn_start:
             # sync global model to local
             local_model.load_state_dict(global_model.state_dict())
