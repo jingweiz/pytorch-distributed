@@ -18,26 +18,17 @@ def evaluator(process_ind, args,
     env = env_prototype(args.env_params, process_ind)
     # memory
     # model
-    local_device = torch.device('cpu')
-    local_model = model_prototype(args.model_params,
-                                  args.state_shape,
-                                  args.action_space,
-                                  args.action_shape).to(local_device)
-    # sync global model to local
-    local_model.load_state_dict(global_model.state_dict())
+    local_device = torch.device('cuda')
 
     # params
 
     # setup
-    local_model.eval()
     torch.set_grad_enabled(False)
 
     last_eval_time = time.time()
     while global_logs.learner_step.value < args.agent_params.steps:
         time.sleep(5)
         if time.time() - last_eval_time > args.agent_params.evaluator_freq:
-            # sync global model to local
-            local_model.load_state_dict(global_model.state_dict())
 
             # main control loop
             experience = reset_experience()
@@ -52,7 +43,7 @@ def evaluator(process_ind, args,
             # flags
             flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
             #while step < args.agent_params.evaluator_steps:
-            while nepisodes<2:
+            while nepisodes < 2:
                 # deal w/ reset
                 if flag_reset:
                     # reset episode stats
@@ -65,7 +56,7 @@ def evaluator(process_ind, args,
                     flag_reset = False
 
                 # run a single step
-                action, _, _ = local_model.get_action(experience.state1)
+                action, _, _ = global_model.get_action(experience.state1, device=torch.device('cuda'))
                 experience = env.step(action)
 
                 # check conditions & update flags

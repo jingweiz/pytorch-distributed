@@ -20,7 +20,7 @@ def dqn_actor(process_ind, args,
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
     # model
-    local_device = torch.device('cpu')
+    local_device = torch.device('cuda')
     local_model = model_prototype(args.model_params,
                                   args.state_shape,
                                   args.action_space,
@@ -81,7 +81,7 @@ def dqn_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps)
+        action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps, device=local_device)
         # action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1.)#eps)
         experience = env.step(action)
         # experience.state1.fill(len(states_nstep))
@@ -224,7 +224,8 @@ def dqn_actor(process_ind, args,
             local_model.load_state_dict(global_model.state_dict())
 
         # report stats
-        if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
+        #if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
+        if flag_reset:
             # push local stats to logger
             with actor_logs.nepisodes.get_lock():
                 actor_logs.total_steps.value += total_steps
