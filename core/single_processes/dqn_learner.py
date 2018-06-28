@@ -61,7 +61,7 @@ def dqn_learner(process_ind, args,
             critic_loss = args.agent_params.value_criteria(predict_qvalues, target_qvalues)
 
             critic_loss.backward()
-            nn.utils.clip_grad_value_(global_model.critic.parameters(), args.agent_params.clip_grad)
+            #nn.utils.clip_grad_value_(global_model.critic.parameters(), args.agent_params.clip_grad)
 
             # learn on this batch - sync local grads to global
             local_optimizer.step()

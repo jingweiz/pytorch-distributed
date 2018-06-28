@@ -19,17 +19,21 @@ def evaluator(process_ind, args,
     # memory
     # model
     local_device = torch.device('cuda')
+    local_model = model_prototype(args.model_params,
+                                  args.state_shape,
+                                  args.action_space,
+                                  args.action_shape).to(local_device)
 
     # params
-
+    local_model.load_state_dict(global_model.state_dict())
     # setup
     torch.set_grad_enabled(False)
-
+    local_model.eval()
     last_eval_time = time.time()
     while global_logs.learner_step.value < args.agent_params.steps:
         time.sleep(5)
         if time.time() - last_eval_time > args.agent_params.evaluator_freq:
-
+            local_model.load_state_dict(global_model.state_dict())
             # main control loop
             experience = reset_experience()
             # counters
@@ -56,7 +60,7 @@ def evaluator(process_ind, args,
                     flag_reset = False
 
                 # run a single step
-                action, _, _ = global_model.get_action(experience.state1, device=torch.device('cuda'))
+                action, _, _ = local_model.get_action(experience.state1, device=torch.device('cuda'))
                 experience = env.step(action)
 
                 # check conditions & update flags
@@ -86,7 +90,7 @@ def evaluator(process_ind, args,
 
             # save model
             print("Saving model " + args.model_name + " ...")
-            torch.save(global_model.state_dict(), args.model_name)
+            torch.save(local_model.state_dict(), args.model_name)
             print("Saved  model " + args.model_name + ".")
 
             last_eval_time = time.time()
