@@ -57,10 +57,10 @@ class DQNPtanModel(Model):
         qvalue = self.critic[1](self.critic[0](input/255.0).view(input.size(0), -1))
         return qvalue
 
-    def get_action(self, input, enable_per=False, eps=0.):
+    def get_action(self, input, enable_per=False, eps=0., device=torch.device('cpu')):
         forward_flag = True
         action, qvalue, max_qvalue = None, None, None
-        input = torch.FloatTensor(input).unsqueeze(0)
+        input = torch.FloatTensor(input).unsqueeze(0).to(device)
         if eps > 0. and np.random.uniform() < eps: # then we choose a random action
             action = np.random.randint(self.output_dims,
                                        size=(input.size(0),

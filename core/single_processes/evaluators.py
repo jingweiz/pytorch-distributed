@@ -56,7 +56,7 @@ def evaluator(process_ind, args,
                     flag_reset = False
 
                 # run a single step
-                action, _, _ = global_model.get_action(experience.state1)
+                action, _, _ = global_model.get_action(experience.state1, device=torch.device('cuda'))
                 experience = env.step(action)
 
                 # check conditions & update flags

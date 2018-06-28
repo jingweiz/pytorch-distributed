@@ -46,8 +46,8 @@ def dqn_learner(process_ind, args,
 
             # learn on this batch - setup
             local_optimizer.zero_grad()
-            state0s = state0s.cuda(non_blokcing=True).to(local_device)
-            state1s = state1s.cuda(non_blokcing=True).to(local_device)
+            state0s = state0s.cuda(non_blocking=True).to(local_device)
+            state1s = state1s.cuda(non_blocking=True).to(local_device)
 
             # learn on this batch - critic loss
             if args.agent_params.enable_double: # double q
