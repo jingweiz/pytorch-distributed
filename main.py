@@ -44,7 +44,7 @@ if __name__ == '__main__':
         # shared model
         global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_space, opt.action_shape)
         if opt.model_file is not None: global_model.load_state_dict(torch.load(opt.model_file)) # this means finetuning on model_file
-        global_model.share_memory() # gradients are allocated lazily, so they are not shared here
+        #global_model.share_memory() # gradients are allocated lazily, so they are not shared here
         # optimizer
         global_optimizer = opt.agent_params.optim(
                 global_model.parameters(),
