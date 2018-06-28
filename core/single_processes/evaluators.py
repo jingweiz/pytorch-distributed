@@ -42,7 +42,8 @@ def evaluator(process_ind, args,
             nepisodes_solved = 0
             # flags
             flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
-            while step < args.agent_params.evaluator_steps:
+            #while step < args.agent_params.evaluator_steps:
+            while nepisodes < 2:
                 # deal w/ reset
                 if flag_reset:
                     # reset episode stats

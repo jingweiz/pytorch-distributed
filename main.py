@@ -46,10 +46,7 @@ if __name__ == '__main__':
         if opt.model_file is not None: global_model.load_state_dict(torch.load(opt.model_file)) # this means finetuning on model_file
         #global_model.share_memory() # gradients are allocated lazily, so they are not shared here
         # optimizer
-        global_optimizer = opt.agent_params.optim(
-                global_model.parameters(),
-                lr=opt.agent_params.lr,
-                weight_decay=opt.agent_params.weight_decay)
+        global_optimizer = None
         # logs
         global_logs = GlobalLogsDict[opt.agent_type]()
         actor_logs = ActorLogsDict[opt.agent_type]()
