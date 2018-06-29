@@ -71,8 +71,8 @@ class DDPGMlpModel(Model):
         qvalue = self.forward_critic(input, action)
         return action, qvalue
 
-    def get_action(self, input, noise=0.):
-        input = torch.FloatTensor(input).unsqueeze(0)
+    def get_action(self, input, noise=0., device=torch.device('cpu')):
+        input = torch.FloatTensor(input).unsqueeze(0).to(device)
         action = self.forward_actor(input)
-        action = action.numpy()
-        return action + noise
+        action = action.item()
+        return action + noise, 0., 0. # TODO: enable_per

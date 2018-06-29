@@ -15,12 +15,11 @@ def dqn_actor(process_ind, args,
               global_model):
     # logs
     print("---------------------------->", process_ind, "actor")
-
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
     # model
-    local_device = torch.device('cuda')
+    local_device = torch.device('cuda')#('cpu')
     local_model = model_prototype(args.model_params,
                                   args.state_shape,
                                   args.action_space,
@@ -66,7 +65,7 @@ def dqn_actor(process_ind, args,
             episode_reward = 0.
             # reset game
             experience = env.reset()
-            experience.state1.fill(len(states_nstep))
+            # experience.state1.fill(len(states_nstep))
             assert experience.state1 is not None
             # local buffers for nstep
             states_nstep.clear()
@@ -160,9 +159,10 @@ def dqn_actor(process_ind, args,
         # NOTE: now we do the extra forward step of the most recent state
         # NOTE: then push the tuple into memory, if the current episode ends
         if flag_reset:
-            # do an extra forward step of the most recent state [-1]
-            # _, qvalue, max_qvalue = local_model.get_action(states_nstep[-1], args.memory_params.enable_per, eps)
-            _, _, max_qvalue = local_model.get_action(states_nstep[-1], args.memory_params.enable_per, 1.)#eps)
+            if args.memory_params.enable_per:
+                # do an extra forward step of the most recent state [-1]
+                # _, qvalue, max_qvalue = local_model.get_action(states_nstep[-1], args.memory_params.enable_per, eps)
+                _, _, max_qvalue = local_model.get_action(states_nstep[-1], args.memory_params.enable_per, eps)
             if len(states_nstep) >= (args.agent_params.nstep + 2):    # (nstep+1) experiences available, use states_nstep[1] as s0
                 rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i - 1) for i in range(1, len(rewards_nstep))])
                 gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 2)
@@ -224,8 +224,7 @@ def dqn_actor(process_ind, args,
             local_model.load_state_dict(global_model.state_dict())
 
         # report stats
-        #if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
-        if flag_reset:
+        if step % args.agent_params.actor_freq == 0: # then push local stats to logger & reset local
             # push local stats to logger
             with actor_logs.nepisodes.get_lock():
                 actor_logs.total_steps.value += total_steps

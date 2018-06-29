@@ -40,8 +40,8 @@ MemoriesDict = {"shared": SharedMemory,
 from core.models.dqn_mlp_model import DQNMlpModel
 from core.models.dqn_cnn_model import DQNCnnModel
 from core.models.ddpg_mlp_model import DDPGMlpModel
-from core.models.dqn_cnn_ptan_model import DQNPtanModel
-ModelsDict = {"dqn-mlp":  DQNMlpModel,
-              "dqn-cnn":  DQNCnnModel,
-              "dqn-cnn-ptan":  DQNPtanModel,
-              "ddpg-mlp": DDPGMlpModel}
+from core.models.dqn_cnn_ptan_model import DQNCnnPtanModel
+ModelsDict = {"dqn-mlp":      DQNMlpModel,
+              "dqn-cnn":      DQNCnnModel,
+              "dqn-cnn-ptan": DQNCnnPtanModel,
+              "ddpg-mlp":     DDPGMlpModel}

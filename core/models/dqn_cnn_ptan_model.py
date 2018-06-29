@@ -6,9 +6,9 @@ import torch.nn.functional as F
 from core.model import Model
 
 
-class DQNPtanModel(Model):
+class DQNCnnPtanModel(Model):
     def __init__(self, args, input_dims, output_dims, action_dims):
-        super(DQNPtanModel, self).__init__(args, input_dims, output_dims, action_dims)
+        super(DQNCnnPtanModel, self).__init__(args, input_dims, output_dims, action_dims)
 
         # model_params for this model
 
@@ -22,9 +22,7 @@ class DQNPtanModel(Model):
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
             nn.ReLU()
         ))
-
         _conv_out_size = self._get_conv_out_size(self.input_dims)
-
         self.critic.append(nn.Sequential(
             nn.Linear(_conv_out_size, 512),
             nn.ReLU(),
@@ -72,10 +70,9 @@ class DQNPtanModel(Model):
             max_qvalue, max_action = qvalues.max(dim=1, keepdim=True)
             max_qvalue = max_qvalue.item()
             max_action = max_action.item()
-            if action is None:
+            if action is None:  # then having to return a greedy action to execute
                 qvalue, action = max_qvalue, max_action
                 action = np.array([[action]])
-            elif enable_per:
-                qvalue = qvalues[0][action[0][0]].teim()
+            elif enable_per:    # already sampled a random action, needs to evaluate its q
+                qvalue = qvalues[0][action[0][0]].item()
         return action, qvalue, max_qvalue
-            

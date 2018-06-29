@@ -29,9 +29,6 @@ if __name__ == '__main__':
     opt.terminal_shape = opt.agent_params.num_tasks
     del dummy_env
 
-    # # NOTE: support for hist_len > 1
-    # opt.state_shape.insert(0, opt.agent_params.hist_len)
-
     processes = []
     if opt.mode == 1:
         # shared memory
@@ -43,11 +40,11 @@ if __name__ == '__main__':
         global_memory = memory_prototype(opt.memory_params)
         # shared model
         global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_space, opt.action_shape)
-        global_model.to(torch.device('cuda'))
         if opt.model_file is not None: global_model.load_state_dict(torch.load(opt.model_file)) # this means finetuning on model_file
-        #global_model.share_memory() # gradients are allocated lazily, so they are not shared here
+        global_model.to(torch.device('cuda'))   # TODO: set w/ args
+        # global_model.share_memory() # gradients are allocated lazily, so they are not shared here
         # optimizer
-        global_optimizer = None
+        global_optimizer = None#opt.agent_params.optim(global_model.parameters())
         # logs
         global_logs = GlobalLogsDict[opt.agent_type]()
         actor_logs = ActorLogsDict[opt.agent_type]()

@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from collections import deque
 import torch
@@ -19,7 +20,7 @@ def ddpg_actor(process_ind, args,
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
     # memory
     # model
-    local_device = torch.device('cpu')
+    local_device = torch.device('cuda')#('cpu')
     local_model = model_prototype(args.model_params,
                                   args.state_shape,
                                   args.action_space,
@@ -48,10 +49,10 @@ def ddpg_actor(process_ind, args,
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     # local buffers for nstep
-    states_nstep     = deque(maxlen=args.agent_params.nstep + 1)
-    actions_nstep    = deque(maxlen=args.agent_params.nstep)
-    rewards_nstep    = deque(maxlen=args.agent_params.nstep)
-    terminal1s_nstep = deque(maxlen=args.agent_params.nstep)
+    states_nstep     = deque(maxlen=args.agent_params.nstep + 2)
+    actions_nstep    = deque(maxlen=args.agent_params.nstep + 1)
+    rewards_nstep    = deque(maxlen=args.agent_params.nstep + 1)
+    terminal1s_nstep = deque(maxlen=args.agent_params.nstep + 1)
     while global_logs.learner_step.value < args.agent_params.steps:
         # deal w/ reset
         if flag_reset:
@@ -71,7 +72,7 @@ def ddpg_actor(process_ind, args,
             flag_reset = False
 
         # run a single step
-        action = local_model.get_action(experience.state1, random_process.sample())
+        action, _, _ = local_model.get_action(experience.state1, random_process.sample(), device=local_device)
         experience = env.step(action)
 
         # local buffers for nstep
@@ -81,12 +82,30 @@ def ddpg_actor(process_ind, args,
         terminal1s_nstep.append(experience.terminal1)
 
         # push to memory
-        global_memory.feed((states_nstep[0],
-                            actions_nstep[0],
-                            [np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])],
-                            [np.power(args.agent_params.gamma, len(states_nstep)-1)],
-                            states_nstep[-1],
-                            terminal1s_nstep[0]))
+        # NOTE: now states_nstep[-1] has not yet been passed through the model
+        # NOTE: so its qvalue & max_qvalue are not yet available for calculating the tderr for priority
+        # NOTE: so here we only push the second most recent tuple [-2] into the memory
+        # NOTE: and do an extra forward of [-1] only when the current episode terminates
+        # NOTE: then push the most recent tuple into memory
+        # read as: from state0, take action0, accumulate rewards_between in n step, arrive at stateN, results in terminalN
+        # state0: states_nstep[0]
+        # action0: actions_nstep[0]
+        # rewards_between: discounted sum over rewards_nstep[0] ~ rewards_nstep[-2]-
+        # stateN: states_nstep[-2]
+        # terminalN: terminal1s_nstep[-2]
+        # qvalue0: qvalues_nstep[0]
+        # max_qvalueN: max_qvalues_nstep[-1] # NOTE: this stores the value for states_nstep[-2]
+        if len(states_nstep) >= 3:
+            rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep) - 1)])
+            gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 2)
+            priority = 0.
+            global_memory.feed((states_nstep[0],
+                                actions_nstep[0],
+                                [rewards_between],
+                                [gamma_sn],
+                                states_nstep[-2],
+                                terminal1s_nstep[-2]),
+                                priority)
 
         # check conditions & update flags
         if experience.terminal1:
@@ -94,6 +113,32 @@ def ddpg_actor(process_ind, args,
             flag_reset = True
         if args.env_params.early_stop and (episode_steps + 1) >= args.env_params.early_stop:
             flag_reset = True
+
+        # NOTE: now we do the extra forward step of the most recent state
+        # NOTE: then push the tuple into memory, if the current episode ends
+        if flag_reset:
+            if len(states_nstep) >= (args.agent_params.nstep + 2):    # (nstep+1) experiences available, use states_nstep[1] as s0
+                rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i - 1) for i in range(1, len(rewards_nstep))])
+                gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 2)
+                priority = 0.
+                global_memory.feed((states_nstep[1],
+                                    actions_nstep[1],
+                                    [rewards_between],
+                                    [gamma_sn],
+                                    states_nstep[-1],
+                                    terminal1s_nstep[-1]),
+                                    priority)
+            else:                                   # not all available, just use the oldest states_nstep[0] as s0
+                rewards_between = np.sum([rewards_nstep[i] * np.power(args.agent_params.gamma, i) for i in range(len(rewards_nstep))])
+                gamma_sn = np.power(args.agent_params.gamma, len(states_nstep) - 1)
+                priority = 0.
+                global_memory.feed((states_nstep[0],
+                                    actions_nstep[0],
+                                    [rewards_between],
+                                    [gamma_sn],
+                                    states_nstep[-1],
+                                    terminal1s_nstep[-1]),
+                                    priority)
 
         # update counters & stats
         with global_logs.actor_step.get_lock():

@@ -1,6 +1,6 @@
+import time
 import numpy as np
 from collections import deque
-import time
 import torch
 
 from utils.helpers import reset_experience
@@ -18,21 +18,25 @@ def evaluator(process_ind, args,
     env = env_prototype(args.env_params, process_ind)
     # memory
     # model
-    local_device = torch.device('cuda')
+    local_device = torch.device('cuda')#('cpu')
     local_model = model_prototype(args.model_params,
                                   args.state_shape,
                                   args.action_space,
                                   args.action_shape).to(local_device)
+    # sync global model to local
+    local_model.load_state_dict(global_model.state_dict())
 
     # params
-    local_model.load_state_dict(global_model.state_dict())
+
     # setup
-    torch.set_grad_enabled(False)
     local_model.eval()
+    torch.set_grad_enabled(False)
+
     last_eval_time = time.time()
     while global_logs.learner_step.value < args.agent_params.steps:
         time.sleep(5)
         if time.time() - last_eval_time > args.agent_params.evaluator_freq:
+            # sync global model to local
             local_model.load_state_dict(global_model.state_dict())
             # main control loop
             experience = reset_experience()
@@ -46,7 +50,7 @@ def evaluator(process_ind, args,
             nepisodes_solved = 0
             # flags
             flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
-            #while step < args.agent_params.evaluator_steps:
+            # while step < args.agent_params.evaluator_steps:
             while nepisodes < 2:
                 # deal w/ reset
                 if flag_reset:
@@ -60,7 +64,7 @@ def evaluator(process_ind, args,
                     flag_reset = False
 
                 # run a single step
-                action, _, _ = local_model.get_action(experience.state1, device=torch.device('cuda'))
+                action, _, _ = local_model.get_action(experience.state1, device=local_device)
                 experience = env.step(action)
 
                 # check conditions & update flags

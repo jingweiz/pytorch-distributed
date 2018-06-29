@@ -16,8 +16,12 @@ def ddpg_logger(process_ind, args,
 
     # start logging
     last_log_time = time.time()
+    current_actor_step = 0
+    current_learner_step = 0
     while global_loggers.learner_step.value < args.agent_params.steps:
+        time.sleep(5)
         if evaluator_loggers.logger_lock.value:
+            current_actor_step = global_loggers.actor_step.value
             current_learner_step = global_loggers.learner_step.value
             with evaluator_loggers.logger_lock.get_lock():
                 if evaluator_loggers.nepisodes.value > 0:
@@ -35,7 +39,8 @@ def ddpg_logger(process_ind, args,
                     board.add_scalar("actor/avg_steps", actor_loggers.total_steps.value/actor_loggers.nepisodes.value, current_learner_step)
                     board.add_scalar("actor/avg_reward", actor_loggers.total_reward.value/actor_loggers.nepisodes.value, current_learner_step)
                     board.add_scalar("actor/repisodes_solved", actor_loggers.nepisodes_solved.value/actor_loggers.nepisodes.value, current_learner_step)
-                    board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, global_loggers.learner_step.value)
+                    board.add_scalar("actor/total_nframes", current_actor_step, current_learner_step)
+                    # board.add_scalar("actor/total_nepisodes", actor_total_nepisodes, current_learner_step)
                     actor_loggers.total_steps.value = 0
                     actor_loggers.total_reward.value = 0.
                     actor_loggers.nepisodes.value = 0
