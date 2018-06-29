@@ -65,7 +65,6 @@ def dqn_actor(process_ind, args,
             episode_reward = 0.
             # reset game
             experience = env.reset()
-            # experience.state1.fill(len(states_nstep))
             assert experience.state1 is not None
             # local buffers for nstep
             states_nstep.clear()
@@ -81,36 +80,16 @@ def dqn_actor(process_ind, args,
 
         # run a single step
         action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, eps, device=local_device)
-        # action, qvalue, max_qvalue = local_model.get_action(experience.state1, args.memory_params.enable_per, 1.)#eps)
         experience = env.step(action)
-        # experience.state1.fill(len(states_nstep))
-        # qvalue = len(states_nstep)-1
-        # max_qvalue = len(states_nstep)-1
 
         # local buffers for nstep
         states_nstep.append(experience.state1)
         actions_nstep.append(experience.action)
         rewards_nstep.append(experience.reward)
-        # rewards_nstep.append(len(states_nstep)-1)#experience.reward)
         terminal1s_nstep.append(experience.terminal1)
         if args.memory_params.enable_per:
             qvalues_nstep.append(qvalue)
             max_qvalues_nstep.append(max_qvalue)
-
-        # print("--------------------------------->")
-        # print("last exp     =====>", experience.state1.mean(), len(states_nstep), qvalue, max_qvalue)
-        # print("states_nstep ----->", )
-        # for i in range(len(states_nstep)):
-        #     print(i, states_nstep[i].mean())
-        # print("rewards_nstep ----->", )
-        # for i in range(len(rewards_nstep)):
-        #     print(i, rewards_nstep[i])
-        # print("qvalues_nstep ----->", )
-        # for i in range(len(qvalues_nstep)):
-        #     print(i, qvalues_nstep[i])
-        # print("max_qvalues_nstep ----->", )
-        # for i in range(len(max_qvalues_nstep)):
-        #     print(i, max_qvalues_nstep[i])
 
         # push to memory
         # NOTE: now states_nstep[-1] has not yet been passed through the model
@@ -132,15 +111,6 @@ def dqn_actor(process_ind, args,
             priority = 0.
             if args.memory_params.enable_per:   # then use tderr as the initial priority
                 priority = abs(rewards_between + gamma_sn * max_qvalues_nstep[-1] - qvalues_nstep[0])
-            # print("      feeding =====>", )
-            # print("s0 --->", states_nstep[0].mean())
-            # print("sn --->", states_nstep[-2].mean())
-            # print("r  --->", rewards_between)
-            # print("gn --->", gamma_sn)
-            # print("q0 --->", qvalues_nstep[0])
-            # print("qn*--->", max_qvalues_nstep[-1])
-            # print("pr --->", priority)
-            # time.sleep(3)
             global_memory.feed((states_nstep[0],
                                 actions_nstep[0],
                                 [rewards_between],
@@ -169,15 +139,6 @@ def dqn_actor(process_ind, args,
                 priority = 0.
                 if args.memory_params.enable_per:   # then use tderr as the initial priority
                     priority = abs(rewards_between + gamma_sn * max_qvalue - qvalues_nstep[1])
-                # print("      feeding =====> extra full", )
-                # print("s0 --->", states_nstep[1].mean())
-                # print("sn --->", states_nstep[-1].mean())
-                # print("rr --->", rewards_between)
-                # print("ga --->", gamma_sn)
-                # print("q0 --->", qvalues_nstep[1])
-                # print("qn*--->", max_qvalue)
-                # print("pr --->", priority)
-                # time.sleep(3)
                 global_memory.feed((states_nstep[1],
                                     actions_nstep[1],
                                     [rewards_between],
@@ -191,15 +152,6 @@ def dqn_actor(process_ind, args,
                 priority = 0.
                 if args.memory_params.enable_per:   # then use tderr as the initial priority
                     priority = abs(rewards_between + gamma_sn * max_qvalue - qvalues_nstep[0])
-                # print("      feeding =====> extra parts", )
-                # print("s0 --->", states_nstep[0].mean())
-                # print("sn --->", states_nstep[-1].mean())
-                # print("rr --->", rewards_between)
-                # print("ga --->", gamma_sn)
-                # print("q0 --->", qvalues_nstep[0])
-                # print("qn*--->", max_qvalue)
-                # print("pr --->", priority)
-                # time.sleep(3)
                 global_memory.feed((states_nstep[0],
                                     actions_nstep[0],
                                     [rewards_between],

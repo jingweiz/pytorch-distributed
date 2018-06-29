@@ -15,22 +15,22 @@ class DQNCnnModel(Model):
         # critic
         self.critic = nn.ModuleList()
         self.critic.append(nn.Sequential(
-            nn.Conv2d(self.input_dims[0], 32, kernel_size=3, stride=2),
+            nn.Conv2d(self.input_dims[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
             nn.ReLU()
         ))
         _conv_out_size = self._get_conv_out_size(self.input_dims)
         self.critic.append(nn.Sequential(
-            nn.Linear(_conv_out_size, 256),
+            nn.Linear(_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(256, self.output_dims),
+            nn.Linear(512, self.output_dims),
         ))
 
         # reset
-        self._reset()
+        #self._reset()
 
     def _get_conv_out_size(self, input_dims):
         out = self.critic[0](torch.zeros(input_dims).unsqueeze(0))
@@ -52,13 +52,13 @@ class DQNCnnModel(Model):
         nn.init.constant_(self.critic[1][2].bias.data, 0)
 
     def forward(self, input):
-        qvalue = self.critic[1](self.critic[0](input).view(input.size(0), -1))
+        qvalue = self.critic[1](self.critic[0](input / 255.).view(input.size(0), -1))
         return qvalue
 
-    def get_action(self, input, enable_per=False, eps=0.):
+    def get_action(self, input, enable_per=False, eps=0., device=torch.device('cpu')):
         forward_flag = True
         action, qvalue, max_qvalue = None, None, None
-        input = torch.FloatTensor(input).unsqueeze(0)
+        input = torch.FloatTensor(input).unsqueeze(0).to(device)
         if eps > 0. and np.random.uniform() < eps: # then we choose a random action
             action = np.random.randint(self.output_dims,
                                        size=(input.size(0),

@@ -11,21 +11,18 @@ from utils.random_process import OrnsteinUhlenbeckProcess
 
 CONFIGS = [
 # agent_type, env_type, game,                 memory_type, model_type
-[ "dqn",      "gym",    "CartPole-v0",        "shared",    "dqn-mlp" ], # 0
-[ "dqn",      "gym",    "Pong-ram-v0",        "shared",    "dqn-mlp" ], # 1
-[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 2
-[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn-ptan" ], # 3
-[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 4
+[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 0
+[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 1
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
-        self.machine    = "chokito"     # "machine_id"
-        self.timestamp  = "18062901"    # "yymmdd##"
+        self.machine    = "daim"        # "machine_id"
+        self.timestamp  = "18062900"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 4
+        self.config     = 3
         self.gpu_ind    = 0             # learner will be using device('cuda:gpu_ind')
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
@@ -35,7 +32,7 @@ class Params(object):
         self.visualize  = True          # whether do online plotting and stuff or not
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
-        self.num_actors = 8#2
+        self.num_actors = 8
         self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
 
         # prefix for saving models&logs
@@ -90,16 +87,16 @@ class MemoryParams(Params):
             elif self.agent_type == "ddpg":
                 self.memory_size = 50000
 
-            self.enable_per = False              # prioritized experience replay
+            self.enable_per = False             # TODO: not completed for now: prioritized experience replay
             # dtype for states
             if "mlp" in self.model_type:
-                # self.dtype = torch.float32    # TODO: somehow passing in dtype causes error in mp
+                # self.dtype = torch.float32    # somehow passing in dtype causes error in mp
                 self.tensortype = torch.FloatTensor
             elif "cnn" in self.model_type:      # save image as byte to save space
-                # self.dtype = torch.uint8      # TODO: somehow passing in dtype causes error in mp
+                # self.dtype = torch.uint8      # somehow passing in dtype causes error in mp
                 self.tensortype = torch.ByteTensor
 
-            self.enable_per = False              # prioritized experience replay
+            self.enable_per = False             # prioritized experience replay
             if self.enable_per:
                 self.priority_exponent = 0.5    # TODO: rainbow: 0.5, distributed: 0.6
                 self.priority_weight = 0.4
@@ -127,7 +124,7 @@ class AgentParams(Params):
             self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 1000000 # max #iterations
+            self.steps               = 500000 # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = np.inf#40.#100
             self.lr                  = 1e-4#2.5e-4/4.
@@ -145,7 +142,7 @@ class AgentParams(Params):
             self.learn_start         = 5000 # start update params after this many steps
             self.batch_size          = 128
             self.target_model_update = 250
-            self.nstep               = 1
+            self.nstep               = 5    # NOTE: looks this many steps ahead
             # dqn specifics
             self.enable_double       = False#True#False
             self.eps                 = 0.4
@@ -156,7 +153,7 @@ class AgentParams(Params):
             self.optim = torch.optim.Adam
             # generic hyperparameters
             self.num_tasks           = 1    # NOTE: always put main task at last
-            self.steps               = 1000000 # max #iterations
+            self.steps               = 500000 # max #iterations
             self.gamma               = 0.99
             self.clip_grad           = 40.
             self.lr                  = 1e-4
@@ -174,7 +171,7 @@ class AgentParams(Params):
             self.learn_start         = 250  # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
-            self.nstep               = 1#5    # NOTE: this many steps lookahead
+            self.nstep               = 5    # NOTE: looks this many steps ahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
 
