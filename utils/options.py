@@ -174,7 +174,7 @@ class AgentParams(Params):
             self.learn_start         = 250  # start update params after this many steps
             self.batch_size          = 64
             self.target_model_update = 1e-3
-            self.nstep               = 5    # NOTE: this many steps lookahead
+            self.nstep               = 1#5    # NOTE: this many steps lookahead
             # ddpg specifics
             self.random_process      = OrnsteinUhlenbeckProcess
 

@@ -74,5 +74,5 @@ class DDPGMlpModel(Model):
     def get_action(self, input, noise=0., device=torch.device('cpu')):
         input = torch.FloatTensor(input).unsqueeze(0).to(device)
         action = self.forward_actor(input)
-        action = action.item()
+        action = np.array([[action.item()]])
         return action + noise, 0., 0. # TODO: enable_per
