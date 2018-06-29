@@ -2,7 +2,7 @@
 # **pytorch** & **tensorboard**
 *******
 
-* Sample on-line plotting while training a Distributed DQN agent on Pong:
+* Sample on-line plotting while training a Distributed DQN agent on Pong (`nstep` means lookahead this many steps when bootstraping the target q values):
     * blue: `num_actors=2, nstep=1`
     * orange: `num_actors=8, nstep=1`
     * grey: `num_actors=8, nstep=5`
