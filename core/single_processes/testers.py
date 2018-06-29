@@ -41,7 +41,6 @@ def tester(process_ind, args,
     # flags
     flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
     while nepisodes < args.agent_params.tester_nepisodes:
-        print(nepisodes)
         # deal w/ reset
         if flag_reset:
             # reset episode stats
@@ -72,6 +71,7 @@ def tester(process_ind, args,
             nepisodes += 1
             total_steps += episode_steps
             total_reward += episode_reward
+            print("Testing Episode ", nepisodes)
 
     # report stats
     print("nepisodes:", nepisodes)

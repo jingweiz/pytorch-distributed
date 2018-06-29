@@ -6,7 +6,8 @@
     * blue: `num_actors=2, nstep=1`
     * orange: `num_actors=8, nstep=1`
     * grey: `num_actors=8, nstep=5`
-![dqn_pong_plot](/assets/dqn_pong.png)
+
+![dqn_pong](/assets/dqn.png)
 *******
 
 ## What is included?
