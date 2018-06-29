@@ -6,8 +6,6 @@ import torch
 import torch.nn as nn
 
 from utils.random_process import OrnsteinUhlenbeckProcess
-# from optims.sharedAdam import SharedAdam
-# from optims.sharedRMSprop import SharedRMSprop
 
 CONFIGS = [
 # agent_type, env_type, game,                 memory_type, model_type
@@ -22,7 +20,7 @@ class Params(object):
         self.timestamp  = "18062900"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
-        self.config     = 3
+        self.config     = 0
         self.gpu_ind    = 0             # learner will be using device('cuda:gpu_ind')
 
         self.agent_type, self.env_type, self.game, self.memory_type, self.model_type = CONFIGS[self.config]
@@ -33,7 +31,7 @@ class Params(object):
 
         self.num_envs_per_actor = 1     # NOTE: must be 1 for envs that don't have parallel support
         self.num_actors = 8
-        self.num_learners = 1           # TODO: currently have only considered 1 learner; should enable also set each learner to a separate device
+        self.num_learners = 1
 
         # prefix for saving models&logs
         self.refs       = self.machine + "_" + self.timestamp
