@@ -41,8 +41,8 @@ NOTE: we follow the same code structure as [pytorch-rl](https://github.com/jingw
 You only need to modify some parameters in ```./utils/options.py``` to train a new configuration.
 
 * Configure your training in ```./utils/options.py```:
-> * ```line 10```: add an entry into ```CONFIGS``` to define your training (```agent_type```, ```env_type```, ```game```, ```memory_type```, ```model_type```)
-> * ```line 23```: choose the entry you just added
+> * ```line 13```: add an entry into ```CONFIGS``` to define your training (```agent_type```, ```env_type```, ```game```, ```memory_type```, ```model_type```)
+> * ```line 23```: choose the entry ID you just added
 > * ```line 19-20```: fill in your machine/cluster ID (```MACHINE```) and timestamp (```TIMESTAMP```) to define your training signature (```MACHINE_TIMESTAMP```),
  the corresponding model file of this training will be saved under this signature (```./models/MACHINE_TIMESTAMP.pth``` ).
  Also the tensorboard visualization will be displayed under this signature (first activate the tensorboard server by type in bash: ```tensorboard --logdir logs/```, then open this address in your browser: ```http://localhost:6006/```)
@@ -57,7 +57,7 @@ You only need to modify some parameters in ```./utils/options.py``` to train a n
 - Python 3
 - [PyTorch >=v0.4.0](http://pytorch.org/)
 - [tensorboard-pytorch](https://github.com/lanpa/tensorboard-pytorch)
-- [OpenAI Gym](https://github.com/openai/gym)
+- [atari-py](https://github.com/openai/atari-py)
 *******
 
 

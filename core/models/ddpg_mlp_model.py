@@ -6,9 +6,9 @@ import torch.nn.functional as F
 from core.model import Model
 
 
-class DDPGMlpModel(Model):
-    def __init__(self, args, input_dims, output_dims, action_dims):
-        super(DDPGMlpModel, self).__init__(args, input_dims, output_dims, action_dims)
+class DdpgMlpModel(Model):
+    def __init__(self, args, norm_val, input_dims, output_dims, action_dims):
+        super(DdpgMlpModel, self).__init__(args, norm_val, input_dims, output_dims, action_dims)
 
         # model_params for this model
 

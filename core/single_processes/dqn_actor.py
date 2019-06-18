@@ -17,10 +17,12 @@ def dqn_actor(process_ind, args,
     print("---------------------------->", process_ind, "actor")
     # env
     env = env_prototype(args.env_params, process_ind, args.num_envs_per_actor)
+    env.train()
     # memory
     # model
     local_device = torch.device('cuda')#('cpu')
     local_model = model_prototype(args.model_params,
+                                  args.norm_val,
                                   args.state_shape,
                                   args.action_space,
                                   args.action_shape).to(local_device)

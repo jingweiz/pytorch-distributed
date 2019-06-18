@@ -6,9 +6,9 @@ import torch.nn.functional as F
 from core.model import Model
 
 
-class DQNMlpModel(Model):
-    def __init__(self, args, input_dims, output_dims, action_dims):
-        super(DQNMlpModel, self).__init__(args, input_dims, output_dims, action_dims)
+class DqnMlpModel(Model):
+    def __init__(self, args, norm_val, input_dims, output_dims, action_dims):
+        super(DqnMlpModel, self).__init__(args, norm_val, input_dims, output_dims, action_dims)
 
         # model_params for this model
 

@@ -3,10 +3,15 @@ import torch.nn as nn
 
 
 class Model(nn.Module):
-    def __init__(self, args, input_dims, output_dims, action_dims):
+    def __init__(self, args,
+                 norm_val,
+                 input_dims,
+                 output_dims,
+                 action_dims):
         super(Model, self).__init__()
 
         # model_params
+        self.norm_val = norm_val
         # self.model_device = args.model_device
         self.input_dims = input_dims
         self.output_dims = output_dims

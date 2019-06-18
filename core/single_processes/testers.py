@@ -12,10 +12,12 @@ def tester(process_ind, args,
     print("---------------------------->", process_ind, "tester")
     # env
     env = env_prototype(args.env_params, process_ind)
+    env.eval()
     # memory
     # model
     local_device = torch.device('cpu')
     local_model = model_prototype(args.model_params,
+                                  args.norm_val,
                                   args.state_shape,
                                   args.action_space,
                                   args.action_shape).to(local_device)

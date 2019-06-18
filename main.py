@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
     # dummy env to get state/action/reward/gamma/terminal_shape & action_space
     dummy_env = env_prototype(opt.env_params, 0)
+    opt.norm_val = dummy_env.norm_val # use the max val of env states to normalize model inputs
     opt.state_shape = dummy_env.state_shape
     opt.action_shape = dummy_env.action_shape
     opt.action_space = dummy_env.action_space
@@ -32,6 +33,7 @@ if __name__ == '__main__':
     processes = []
     if opt.mode == 1:
         # shared memory
+        opt.memory_params.norm_val = opt.norm_val
         opt.memory_params.state_shape = opt.state_shape
         opt.memory_params.action_shape = opt.action_shape
         opt.memory_params.reward_shape = opt.reward_shape
@@ -39,7 +41,7 @@ if __name__ == '__main__':
         opt.memory_params.terminal_shape = opt.terminal_shape
         global_memory = memory_prototype(opt.memory_params)
         # shared model
-        global_model = model_prototype(opt.model_params, opt.state_shape, opt.action_space, opt.action_shape)
+        global_model = model_prototype(opt.model_params, opt.norm_val, opt.state_shape, opt.action_space, opt.action_shape)
         if opt.model_file is not None: global_model.load_state_dict(torch.load(opt.model_file)) # this means finetuning on model_file
         global_model.to(torch.device('cuda'))   # TODO: set w/ args
         # global_model.share_memory() # gradients are allocated lazily, so they are not shared here

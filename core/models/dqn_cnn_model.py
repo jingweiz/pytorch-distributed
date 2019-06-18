@@ -6,9 +6,9 @@ import torch.nn.functional as F
 from core.model import Model
 
 
-class DQNCnnModel(Model):
-    def __init__(self, args, input_dims, output_dims, action_dims):
-        super(DQNCnnModel, self).__init__(args, input_dims, output_dims, action_dims)
+class DqnCnnModel(Model):
+    def __init__(self, args, norm_val, input_dims, output_dims, action_dims):
+        super(DqnCnnModel, self).__init__(args, norm_val, input_dims, output_dims, action_dims)
 
         # model_params for this model
 
@@ -30,7 +30,7 @@ class DQNCnnModel(Model):
         ))
 
         # reset
-        #self._reset()
+        # self._reset()
 
     def _get_conv_out_size(self, input_dims):
         out = self.critic[0](torch.zeros(input_dims).unsqueeze(0))
@@ -52,7 +52,7 @@ class DQNCnnModel(Model):
         nn.init.constant_(self.critic[1][2].bias.data, 0)
 
     def forward(self, input):
-        qvalue = self.critic[1](self.critic[0](input / 255.).view(input.size(0), -1))
+        qvalue = self.critic[1](self.critic[0](input / self.norm_val).view(input.size(0), -1))
         return qvalue
 
     def get_action(self, input, enable_per=False, eps=0., device=torch.device('cpu')):

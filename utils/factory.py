@@ -30,14 +30,14 @@ EvaluatorsDict = {"dqn":  evaluator,
 TestersDict = {"dqn":  tester,
                "ddpg": tester}
 
-from core.envs.gym_env import GymEnv
-EnvsDict = {"gym": GymEnv}  # gym wrapper
+from core.envs.atari_env import AtariEnv
+EnvsDict = {"atari": AtariEnv}
 
 from core.memories.shared_memory import SharedMemory
 MemoriesDict = {"shared": SharedMemory,
                 "none":   None}
 
-from core.models.dqn_cnn_model import DQNCnnModel
-from core.models.ddpg_mlp_model import DDPGMlpModel
-ModelsDict = {"dqn-cnn":  DQNCnnModel,
-              "ddpg-mlp": DDPGMlpModel}
+from core.models.dqn_cnn_model import DqnCnnModel
+from core.models.ddpg_mlp_model import DdpgMlpModel
+ModelsDict = {"dqn-cnn":  DqnCnnModel,
+              "ddpg-mlp": DdpgMlpModel}

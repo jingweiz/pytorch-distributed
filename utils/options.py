@@ -8,16 +8,16 @@ import torch.nn as nn
 from utils.random_process import OrnsteinUhlenbeckProcess
 
 CONFIGS = [
-# agent_type, env_type, game,                 memory_type, model_type
-[ "dqn",      "gym",    "PongNoFrameskip-v4", "shared",    "dqn-cnn" ], # 0
-[ "ddpg",     "gym",    "Pendulum-v0",        "shared",    "ddpg-mlp"], # 1
+# agent_type, env_type, game,           memory_type, model_type
+[ "dqn",      "atari",  "pong",         "shared",    "dqn-cnn" ], # 0
+# add custom configs ...
 ]
 
 class Params(object):
     def __init__(self):
         # training signature
         self.machine    = "daim"        # "machine_id"
-        self.timestamp  = "18062900"    # "yymmdd##"
+        self.timestamp  = "19061800"    # "yymmdd##"
         # training configuration
         self.mode       = 1             # 1(train) | 2(test model_file)
         self.config     = 0
@@ -65,14 +65,8 @@ class EnvParams(Params):
             self.state_hei = 84
             self.state_wid = 84
 
-        if self.env_type == "gym":
-            self.gym_log_dir = None     # when not None, log will be recoreded by baselines monitor
-
-            # max #steps per episode
-            if self.game == "Pendulum-v0":  #  https://gym.openai.com/evaluations/eval_y44gvOLNRqckK38LtsP1Q/
-                self.early_stop = None#200
-            else:                       # for the ataris
-                self.early_stop = 12500
+        if self.env_type == "atari":
+            self.early_stop = 12500     # TODO: check Rainbow
 
 
 class MemoryParams(Params):
@@ -134,7 +128,7 @@ class AgentParams(Params):
             self.actor_freq          = 250  # push & reset local actor stats every this many actor steps
             self.learner_freq        = 100  # push & reset local learner stats every this many learner steps
             self.evaluator_freq      = 30   # eval every this many secs
-            self.evaluator_steps     = 1000 # eval for this many steps
+            self.evaluator_nepisodes = 2    # eval for this many episodes # TODO:
             self.tester_nepisodes    = 50
             # off-policy specifics
             self.learn_start         = 5000 # start update params after this many steps
@@ -163,7 +157,7 @@ class AgentParams(Params):
             self.actor_freq          = 2500 # push & reset local actor stats every this many actor steps
             self.learner_freq        = 1000 # push & reset local learner stats every this many learner steps
             self.evaluator_freq      = 60   # eval every this many secs
-            self.evaluator_steps     = 1000 # eval for this many steps
+            self.evaluator_nepisodes = 2    # eval for this many episodes # TODO:
             self.tester_nepisodes    = 50
             # off-policy specifics
             self.learn_start         = 250  # start update params after this many steps

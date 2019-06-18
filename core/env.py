@@ -12,7 +12,6 @@ class Env(object):
         # params
         self.mode       = args.mode         # NOTE: save frames when mode=2
         self.seed       = args.seed         # NOTE: so to give a different seed to each instance
-        # self.visualize  = args.visualize    # TODO: setup tensorboard stuff
 
         # env_params
         self.env_type   = args.env_type
@@ -22,8 +21,18 @@ class Env(object):
         self.state_hei = args.state_hei
         self.state_wid = args.state_wid
 
+        self.early_stop = args.early_stop
+
         # setup
-        self._reset_experience()
+        self.training = True
+
+    def train(self):        # uses loss of life as terminal signal
+        self.training = True
+        self.action_repetition = 4
+
+    def eval(self):         # uses standard terminal signal
+        self.training = False
+        self.action_repetition = 4#1    # NOTE
 
     def _reset_experience(self):
         self.exp_state0 = None  # NOTE: always None in this module

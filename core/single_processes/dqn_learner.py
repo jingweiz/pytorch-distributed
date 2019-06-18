@@ -25,6 +25,7 @@ def dqn_learner(process_ind, args,
     #                               args.action_space,
     #                               args.action_shape).to(local_device)
     local_target_model = model_prototype(args.model_params,
+                                         args.norm_val,
                                          args.state_shape,
                                          args.action_space,
                                          args.action_shape).to(local_device)

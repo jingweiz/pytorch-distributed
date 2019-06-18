@@ -16,10 +16,12 @@ def evaluator(process_ind, args,
     print("---------------------------->", process_ind, "evaluator")
     # env
     env = env_prototype(args.env_params, process_ind)
+    env.eval()
     # memory
     # model
     local_device = torch.device('cuda')#('cpu')
     local_model = model_prototype(args.model_params,
+                                  args.norm_val,
                                   args.state_shape,
                                   args.action_space,
                                   args.action_shape).to(local_device)
@@ -51,7 +53,7 @@ def evaluator(process_ind, args,
             # flags
             flag_reset = True   # True when: terminal1 | episode_steps > self.early_stop
             # while step < args.agent_params.evaluator_steps:
-            while nepisodes < 2:
+            while nepisodes < args.agent_params.evaluator_nepisodes:
                 # deal w/ reset
                 if flag_reset:
                     # reset episode stats
