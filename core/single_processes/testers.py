@@ -22,7 +22,7 @@ def tester(process_ind, args,
                                   args.action_space,
                                   args.action_shape).to(local_device)
     # sync global model to local
-    local_model.load_state_dict(torch.load(args.model_file))
+    local_model.load_state_dict(torch.load(args.model_file, map_location='cpu'))
 
     # params
 
